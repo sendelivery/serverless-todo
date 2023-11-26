@@ -22,8 +22,6 @@ const headingLg = style({
   margin: "1rem 0",
 });
 
-export default { heading2Xl, headingXl, headingLg };
-
 // .headingMd {
 //   font-size: 1.2rem;
 //   line-height: 1.5;
@@ -51,6 +49,8 @@ export default { heading2Xl, headingXl, headingLg };
 //   margin: 0 0 1.25rem;
 // }
 
-// .lightText {
-//   color: #666;
-// }
+const lightText = style({
+  color: "#666",
+});
+
+export default { heading2Xl, headingXl, headingLg, lightText };

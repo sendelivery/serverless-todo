@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Inter } from "next/font/google";
-// import "./globals.css";
 import styles from "@/styles/root-layout.css";
 import utilStyles from "@/styles/utilities.css";
 
