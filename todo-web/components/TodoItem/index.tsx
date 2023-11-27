@@ -1,4 +1,4 @@
-import type { TodoItem as TodoItemType } from "@/lib/getTodoItems";
+import type { TodoItem as TodoItemType } from "@/lib/todoClient";
 import styles from "./styles.css";
 import CheckboxWithLabel from "../Checkbox";
 

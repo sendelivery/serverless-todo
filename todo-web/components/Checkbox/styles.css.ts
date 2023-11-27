@@ -29,7 +29,7 @@ const styledCheckbox = style({
   selectors: {
     // On a mouse hover of any elements in our parent, set the backgroud to grey.
     [`${container}:hover input ~ &`]: { backgroundColor: "#ccc" },
-    // When the checkbox is checked, add a blue background
+    // When the checkbox is checked, add a green background
     [`${checkbox}:checked ~ &`]: { backgroundColor: "#43a047" },
     // Create the checkmark/indicator (hidden when not checked)
     "&:after": { content: "", position: "absolute", display: "none" },

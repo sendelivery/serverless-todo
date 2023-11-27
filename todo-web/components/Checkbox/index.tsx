@@ -1,7 +1,7 @@
 import styles from "./styles.css";
 
 export type CheckboxWithLabelProps = {
-  label?: string;
+  label: string;
 };
 
 export default function CheckboxWithLabel(props: CheckboxWithLabelProps) {
