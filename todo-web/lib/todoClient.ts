@@ -41,6 +41,13 @@ let data = [
     description: "App!",
     completed: false,
   },
+  {
+    id: 7,
+    date: "2023-11-26T10:10:22.296Z",
+    description:
+      "Here's an overly long string so we can play around and see what happens when we overflow and wrap and all that nonsense!",
+    completed: false,
+  },
 ];
 
 export type TodoItem = {
