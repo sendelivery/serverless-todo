@@ -5,8 +5,16 @@ const todoItem = style({
   marginBottom: "1rem",
 });
 
-globalStyle(`${todoItem} > p`, {
-  margin: "0 0 0 2rem",
+const checkboxContainer = style({
+  flex: 2,
 });
 
-export default { todoItem };
+const dateContainer = style({
+  flex: 1,
+});
+
+globalStyle(`${todoItem} > ${dateContainer} > p`, {
+  margin: "0",
+});
+
+export default { todoItem, checkboxContainer, dateContainer };

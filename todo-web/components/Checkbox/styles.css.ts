@@ -1,10 +1,11 @@
 import { style } from "@vanilla-extract/css";
 
-const container = style({
+const label = style({
   display: "inline-block",
   position: "relative",
-  paddingLeft: 35,
+  paddingLeft: "2rem",
   cursor: "pointer",
+  width: "calc(100% - 2rem)",
 });
 
 // Hide the browser's default checkbox
@@ -28,15 +29,15 @@ const styledCheckbox = style({
   borderRadius: 25,
   selectors: {
     // On a mouse hover of any elements in our parent, set the backgroud to grey.
-    [`${container}:hover input ~ &`]: { backgroundColor: "#ccc" },
+    [`${label}:hover input ~ &`]: { backgroundColor: "#ccc" },
     // When the checkbox is checked, add a green background
     [`${checkbox}:checked ~ &`]: { backgroundColor: "#43a047" },
     // Create the checkmark/indicator (hidden when not checked)
     "&:after": { content: "", position: "absolute", display: "none" },
     // Show the checkmark when checked
-    [`${container} input:checked ~ &:after`]: { display: "block" },
+    [`${label} input:checked ~ &:after`]: { display: "block" },
     // Style the checkmark/indicator
-    [`${container} &:after`]: {
+    [`${label} &:after`]: {
       left: 9,
       top: 5,
       width: 5,
@@ -48,4 +49,4 @@ const styledCheckbox = style({
   },
 });
 
-export default { container, checkbox, styledCheckbox };
+export default { label, checkbox, styledCheckbox };
