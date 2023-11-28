@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import styles from "./styles.css";
 import type { TodoItem as TodoItemType } from "@/lib/todoClient";
 import TodoItem from "../TodoItem";
 import AddTodoItemForm from "../AddTodoItemForm";
@@ -17,9 +18,11 @@ export default function Table(props: TableProps) {
   };
 
   return (
-    <div>
-      <h2>Description</h2>
-      <h2>Date Added</h2>
+    <div className={styles.table}>
+      <div className={styles.headings}>
+        <h2>Description</h2>
+        <h2>Date Added</h2>
+      </div>
       <div>
         {items.map((item, i) => (
           <TodoItem
