@@ -21,7 +21,7 @@ const checkbox = style({
 const styledCheckbox = style({
   position: "absolute",
   // top and left are relative to container
-  top: "-2px",
+  top: 0,
   left: 0,
   height: 25,
   width: 25,

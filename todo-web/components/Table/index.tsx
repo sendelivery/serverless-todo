@@ -25,12 +25,15 @@ export default function Table(props: TableProps) {
       </div>
       <div>
         {items.map((item, i) => (
-          <TodoItem
-            date={item.date}
-            description={item.description}
-            completed={item.completed}
-            key={`${item}-${i}`}
-          />
+          <>
+            <TodoItem
+              date={item.date}
+              description={item.description}
+              completed={item.completed}
+              key={`${item}-${i}`}
+            />
+            {i < items.length - 1 && <hr />}
+          </>
         ))}
       </div>
       <AddTodoItemForm action={setItem} />

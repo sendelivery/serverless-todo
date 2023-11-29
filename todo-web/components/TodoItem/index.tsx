@@ -25,7 +25,10 @@ export default function TodoItem(props: TodoItemType) {
       </div>
       <div className={styles.dateContainer}>
         <p>
-          {new Date(date).toDateString()} - {completed ? "true" : "false"}
+          {new Date(date).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+          })}
         </p>
       </div>
     </div>

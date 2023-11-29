@@ -2,11 +2,11 @@ import { globalStyle, style } from "@vanilla-extract/css";
 
 const todoItem = style({
   display: "flex",
-  marginBottom: "1rem",
+  minHeight: "25px",
 });
 
 const checkboxContainer = style({
-  flex: 2,
+  flex: 3,
 });
 
 const dateContainer = style({
