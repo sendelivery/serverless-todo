@@ -10,7 +10,8 @@ export type AddTodoItemFormProps = {
 
 export default function AddTodoItemForm(props: AddTodoItemFormProps) {
   function isFormValid(formData: FormData) {
-    const input = formData.get("itemDescription") as string;
+    let input = formData.get("itemDescription") as string;
+    input = input.trim();
     if (input === "") {
       return false;
     }
@@ -23,6 +24,7 @@ export default function AddTodoItemForm(props: AddTodoItemFormProps) {
 
     // Access the form data and parse it into a TodoItem
     const formData = new FormData(e.currentTarget);
+    e.currentTarget.reset();
 
     if (!isFormValid(formData)) {
       // clear form
@@ -44,7 +46,7 @@ export default function AddTodoItemForm(props: AddTodoItemFormProps) {
   }
 
   return (
-    <div>
+    <div className={styles.container}>
       <form method="POST" onSubmit={handleSubmit} className={styles.form}>
         <input name="itemDescription" className={styles.textInput} />
         <button type="submit" className={styles.submitButton}>

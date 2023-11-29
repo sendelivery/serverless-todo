@@ -1,10 +1,13 @@
 import { style } from "@vanilla-extract/css";
 
+const container = style({
+  margin: "2rem",
+});
+
 const form = style({
   display: "flex",
   flexDirection: "row",
   justifyContent: "center",
-  width: "80%",
   height: "1.5rem",
 });
 
@@ -16,4 +19,4 @@ const submitButton = style({
   width: "4rem",
 });
 
-export default { form, textInput, submitButton };
+export default { container, form, textInput, submitButton };
