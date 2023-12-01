@@ -6,6 +6,10 @@ const label = style({
   paddingLeft: "2rem",
   cursor: "pointer",
   width: "calc(100% - 2rem)",
+  msHyphens: "auto",
+  WebkitHyphens: "auto",
+  MozHyphens: "auto",
+  hyphens: "auto",
 });
 
 // Hide the browser's default checkbox

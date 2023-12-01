@@ -19,7 +19,7 @@ export default function CheckboxWithLabel(props: CheckboxWithLabelProps) {
   return (
     <div>
       <label className={styles.label}>
-        {props.label}
+        {label}
         <input
           type="checkbox"
           id={label}
