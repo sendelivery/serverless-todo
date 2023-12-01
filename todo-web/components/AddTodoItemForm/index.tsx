@@ -1,11 +1,11 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { upsertTodoItem, type TodoItem } from "@/lib/todoClient";
+import { TodoEntryInput } from "@/lib/todoClient";
 import styles from "./styles.css";
 
 export type AddTodoItemFormProps = {
-  action: (item: TodoItem) => void;
+  action: (item: TodoEntryInput) => void;
 };
 
 export default function AddTodoItemForm(props: AddTodoItemFormProps) {
@@ -31,7 +31,7 @@ export default function AddTodoItemForm(props: AddTodoItemFormProps) {
       return;
     }
 
-    const todoItem: TodoItem = {
+    const todoItem: TodoEntryInput = {
       date: new Date().toISOString(),
       description: formData.get("itemDescription") as string,
       completed: false,

@@ -26,7 +26,8 @@ let data = [
   {
     id: 4,
     date: "2023-11-26T10:10:22.296Z",
-    description: "Hook up Todo app frontend to backend via API Gateway",
+    description:
+      "Hook up Todo app frontend to backend via API Gateway and Next.js API routes",
     completed: false,
   },
   {
@@ -55,27 +56,34 @@ let data = [
   },
 ];
 
-export type TodoItem = {
+export type TodoEntry = {
+  id: number;
   date: string;
   description: string;
   completed: boolean;
 };
 
-export async function getTodoItems(): Promise<TodoItem[]> {
+export type TodoEntryInput = {
+  date: string;
+  description: string;
+  completed: boolean;
+};
+
+export async function getTodoEntries(): Promise<TodoEntry[]> {
   return new Promise((resolve) => {
     resolve(data);
   });
 }
 
-export async function upsertTodoItem(item: TodoItem): Promise<number> {
+export async function upsertTodoEntry(item: TodoEntryInput): Promise<number> {
   return new Promise((resolve) => {
     const id = data.length * (Date.now() % 100000);
-    data.push({ id, ...item });
+    data.push({ ...item, id });
     resolve(200);
   });
 }
 
-export async function deleteTodoItem(id: number): Promise<number> {
+export async function deleteTodoEntry(id: number): Promise<number> {
   return new Promise((resolve, reject) => {
     let found = false;
 
@@ -86,6 +94,6 @@ export async function deleteTodoItem(id: number): Promise<number> {
       }
     }
 
-    found ? resolve(200) : reject(500);
+    found ? resolve(200) : reject(400);
   });
 }

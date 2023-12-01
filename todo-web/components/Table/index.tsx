@@ -2,24 +2,30 @@
 
 import { useState } from "react";
 import styles from "./styles.css";
-import type { TodoItem as TodoItemType } from "@/lib/todoClient";
+import type { TodoEntry, TodoEntryInput } from "@/lib/todoClient";
 import TodoItem from "../TodoItem";
 import AddTodoItemForm from "../AddTodoItemForm";
 
 type TableProps = {
-  items: TodoItemType[];
+  items: TodoEntry[];
 };
 
 export default function Table(props: TableProps) {
-  const [items, setItems] = useState<TodoItemType[]>(props.items);
+  const [items, setItems] = useState<TodoEntry[]>(props.items);
 
-  const setItem = (item: TodoItemType) => {
-    setItems([...items, item]);
+  const addItem = (item: TodoEntryInput) => {
+    const itemWithId = { ...item, id: items.length };
+    setItems([...items, itemWithId]);
+  };
+
+  const deleteItem = (id: number) => {
+    const filtered = items.filter((item) => item.id !== id);
+    setItems(filtered);
   };
 
   return (
     <div className={styles.table}>
-      <AddTodoItemForm action={setItem} />
+      <AddTodoItemForm action={addItem} />
       <div className={styles.headings}>
         <h2>Description</h2>
         <h2>Date Added</h2>
@@ -28,10 +34,9 @@ export default function Table(props: TableProps) {
         {items.map((item, i) => (
           <>
             <TodoItem
-              date={item.date}
-              description={item.description}
-              completed={item.completed}
-              key={`${item}-${i}`}
+              key={item.id}
+              item={item}
+              deleteItem={() => deleteItem(item.id)}
             />
             {i < items.length - 1 && <hr />}
           </>

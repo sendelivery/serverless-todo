@@ -1,13 +1,18 @@
 "use client";
 
-import type { TodoItem as TodoItemType } from "@/lib/todoClient";
+import { type TodoEntry } from "@/lib/todoClient";
 import styles from "./styles.css";
 import CheckboxWithLabel from "../Checkbox";
 import { useState } from "react";
 import { CrossButton } from "../Button";
 
-export default function TodoItem(props: TodoItemType) {
-  const { date, description, completed } = props;
+export type TodoItemProps = {
+  item: TodoEntry;
+  deleteItem: (id: number) => void;
+};
+
+export default function TodoItem(props: TodoItemProps) {
+  const { date, description, completed } = props.item;
 
   const [checked, setChecked] = useState(completed);
   const handleCheck = (value: boolean) => {
@@ -31,7 +36,7 @@ export default function TodoItem(props: TodoItemType) {
           })}
         </p>
       </div>
-      <CrossButton onClick={() => console.log("Confirm deletion of item!")} />
+      <CrossButton onClick={props.deleteItem} />
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import Table from "@/components/Table";
-import { getTodoItems, TodoItem as TodoItemType } from "@/lib/todoClient";
+import { getTodoEntries, TodoEntry } from "@/lib/todoClient";
 
 export default async function Page() {
   // TODO: use context here?
-  const items: TodoItemType[] = await getTodoItems();
+  const items: TodoEntry[] = await getTodoEntries();
 
   return (
     <>

@@ -1,5 +1,3 @@
-"use client";
-
 import styles from "./styles.css";
 
 export type ButtonWithTextProps = {
@@ -18,7 +16,7 @@ export function ButtonWithText(props: ButtonWithTextProps) {
 }
 
 export type CrossButtonProps = {
-  onClick?: () => void;
+  onClick?: (args?: any) => void;
 };
 
 export function CrossButton(props: CrossButtonProps) {
