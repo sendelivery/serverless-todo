@@ -4,13 +4,13 @@ import type { TodoItem as TodoItemType } from "@/lib/todoClient";
 import styles from "./styles.css";
 import CheckboxWithLabel from "../Checkbox";
 import { useState } from "react";
+import { CrossButton } from "../Button";
 
 export default function TodoItem(props: TodoItemType) {
   const { date, description, completed } = props;
 
   const [checked, setChecked] = useState(completed);
   const handleCheck = (value: boolean) => {
-    // TODO: Find out if passing setState hooks as props is an anti-pattern.
     setChecked(value);
   };
 
@@ -31,6 +31,7 @@ export default function TodoItem(props: TodoItemType) {
           })}
         </p>
       </div>
+      <CrossButton onClick={() => console.log("Confirm deletion of item!")} />
     </div>
   );
 }

@@ -19,6 +19,7 @@ export default function Table(props: TableProps) {
 
   return (
     <div className={styles.table}>
+      <AddTodoItemForm action={setItem} />
       <div className={styles.headings}>
         <h2>Description</h2>
         <h2>Date Added</h2>
@@ -36,7 +37,6 @@ export default function Table(props: TableProps) {
           </>
         ))}
       </div>
-      <AddTodoItemForm action={setItem} />
     </div>
   );
 }
