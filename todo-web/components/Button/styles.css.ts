@@ -9,7 +9,7 @@ const crossButton = style({
   borderRadius: 25,
   width: 25,
   height: 25,
-  backgroundColor: "#ccc",
+  backgroundColor: "#eee",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
