@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import utilStyles from "@/styles/utilities.css";
 import styles from "./styles.css";
 import type { TodoEntry, TodoEntryInput } from "@/lib/todoClient";
 import TodoItem from "../TodoItem";
@@ -26,9 +27,14 @@ export default function Table(props: TableProps) {
   return (
     <div className={styles.table}>
       <AddTodoItemForm action={addItem} />
-      <div className={styles.headings}>
-        <h2>Description</h2>
-        <h2>Date Added</h2>
+      <div className={styles.headingBar}>
+        <div className={styles.firstHeading}>
+          <h2 className={utilStyles.headingXl}>Description</h2>
+        </div>
+        <div className={styles.secondHeading}>
+          <h2 className={utilStyles.headingXl}>Date Added</h2>
+        </div>
+        <div className={styles.fillerBlock}></div>
       </div>
       <div>
         {items.map((item, i) => (
