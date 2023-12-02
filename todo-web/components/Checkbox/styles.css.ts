@@ -3,7 +3,7 @@ import { style } from "@vanilla-extract/css";
 const label = style({
   display: "inline-block",
   position: "relative",
-  paddingLeft: "2rem",
+  padding: "3px 3px 3px 2rem",
   cursor: "pointer",
   width: "calc(100% - 2rem)",
   msHyphens: "auto",
