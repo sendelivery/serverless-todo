@@ -1,24 +1,20 @@
+import { ButtonHTMLAttributes } from "react";
 import styles from "./styles.css";
 
-export type ButtonWithTextProps = {
-  text: string;
-  onClick: () => void;
+export type SimpleButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  simpleStyle?: "plus" | "cross" | "unset";
 };
 
-export function ButtonWithText(props: ButtonWithTextProps) {
+export function SimpleButton({
+  simpleStyle = "unset",
+  ...buttonAttributes
+}: SimpleButtonProps) {
   return (
-    <div>
-      <button type="button" onClick={props.onClick}>
-        {props.text}
-      </button>
-    </div>
+    <button
+      className={`${styles.simpleButton} ${styles[simpleStyle]} ${
+        buttonAttributes.disabled && styles.disabled
+      }`}
+      onClick={buttonAttributes.onClick}
+    ></button>
   );
-}
-
-export type CrossButtonProps = {
-  onClick?: (args?: any) => void;
-};
-
-export function CrossButton(props: CrossButtonProps) {
-  return <div className={styles.crossButton} onClick={props.onClick}></div>;
 }

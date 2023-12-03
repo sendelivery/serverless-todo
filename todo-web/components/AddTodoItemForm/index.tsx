@@ -1,14 +1,28 @@
 "use client";
 
-import type { FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { TodoEntryInput } from "@/lib/todoClient";
 import styles from "./styles.css";
+import { SimpleButton } from "../Button";
 
 export type AddTodoItemFormProps = {
   action: (item: TodoEntryInput) => void;
 };
 
 export default function AddTodoItemForm(props: AddTodoItemFormProps) {
+  const [description, setDescription] = useState("");
+
+  function handleFormChange(e: ChangeEvent<HTMLInputElement>) {
+    const text = e.target.value;
+
+    if (text) {
+      setDescription(text);
+      return;
+    }
+
+    setDescription("");
+  }
+
   function isFormValid(formData: FormData) {
     let input = formData.get("itemDescription") as string;
     input = input.trim();
@@ -25,6 +39,7 @@ export default function AddTodoItemForm(props: AddTodoItemFormProps) {
     // Access the form data and parse it into a TodoItem
     const formData = new FormData(e.currentTarget);
     e.currentTarget.reset();
+    setDescription("");
 
     if (!isFormValid(formData)) {
       // clear form
@@ -48,10 +63,18 @@ export default function AddTodoItemForm(props: AddTodoItemFormProps) {
   return (
     <div className={styles.container}>
       <form method="POST" onSubmit={handleSubmit} className={styles.form}>
-        <input name="itemDescription" className={styles.textInput} />
-        <button type="submit" className={styles.submitButton}>
-          Add
-        </button>
+        <input
+          name="itemDescription"
+          className={styles.textInput}
+          onChange={handleFormChange}
+          placeholder="Write a short description to add to your Todo list"
+          autoComplete="off"
+        />
+        <SimpleButton
+          simpleStyle="plus"
+          disabled={!description}
+          type="submit"
+        />
       </form>
     </div>
   );

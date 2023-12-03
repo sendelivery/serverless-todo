@@ -4,11 +4,11 @@ import { type TodoEntry } from "@/lib/todoClient";
 import styles from "./styles.css";
 import CheckboxWithLabel from "../Checkbox";
 import { useState } from "react";
-import { CrossButton } from "../Button";
+import { SimpleButton } from "../Button";
 
 export type TodoItemProps = {
   item: TodoEntry;
-  deleteItem: (id: number) => void;
+  deleteItem: () => void;
 };
 
 export default function TodoItem(props: TodoItemProps) {
@@ -36,7 +36,7 @@ export default function TodoItem(props: TodoItemProps) {
           })}
         </p>
       </div>
-      <CrossButton onClick={props.deleteItem} />
+      <SimpleButton onClick={props.deleteItem} simpleStyle="cross" />
     </div>
   );
 }
