@@ -34,33 +34,7 @@ class TodoApiStack(Stack):
                 service="lambda",
                 region=Aws.REGION,
                 proxy=True,
-                path=f"2015-03-31/functions/{get_items_function.function_arn}:${{stageVariables.lambdaAlias}}/invocations"
-            )
-        )
-
-        # Define Prod resources
-        prod_alias = _lambda.Alias(self, "ProdGetItems",
-            alias_name="prod",
-            version=version
-        )
-
-        prod_deployment = apigw.Deployment(self, "ProdApiDeployment", api=api)
-        prod_stage = apigw.Stage(self, "ProdApiStage",
-            deployment=prod_deployment,
-            stage_name="prod",
-            variables={
-                "lambdaAlias": prod_alias.alias_name
-            }
-        )
-
-        # Permissions to invoke Prod Lambda
-        prod_alias.add_permission("ProdStageInvokeProdAliasPermission",
-            principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=api.arn_for_execute_api(
-                method=items_get_method.http_method,
-                path=items_resource.path,
-                stage=prod_stage.stage_name
+                path=f"2015-03-31/functions/{get_items_function.function_arn}/invocations"
             )
         )
 
