@@ -26,18 +26,31 @@ class TodoApiStack(Stack):
             )
         )
 
-        # Define a consumer Lambda function for our GET API
+        # Define a consumer Lambda function for the GET verb
         get_items_function = _lambda.Function(self, "GetItems",
             runtime=_lambda.Runtime.PYTHON_3_9,
-            handler="getItems.handler",
-            code=_lambda.Code.from_asset("lambdas")
+            handler="get_items.handler",
+            code=_lambda.Code.from_asset("lambdas/get_items")
         )
 
         get_items_function.add_environment("TABLE_NAME", items_table.table_name)
-        version = get_items_function.current_version
+        get_items_version = get_items_function.current_version
 
         # Grant our consumer Lambda permission to read from DynamoDB
         items_table.grant_read_data(get_items_function)
+
+        # Define a producer Lambda function for the POST / PUT verbs
+        upsert_items_function = _lambda.Function(self, "UpsertItems",
+            runtime=_lambda.Runtime.PYTHON_3_9,
+            handler="upsert_items.handler",
+            code=_lambda.Code.from_asset("lambdas/uspsert_items")
+        )
+
+        upsert_items_function.add_environment("TABLE_NAME", items_table.table_name)
+        upsert_items_version = upsert_items_function.current_version
+
+        # Grant our producer Lambda permission to write to DynamoDB
+        items_table.grant_write_data(upsert_items_function)
 
         # Define the REST API
         api = apigw.RestApi(self, "DeploymentStagesAPI",
@@ -45,8 +58,9 @@ class TodoApiStack(Stack):
             deploy=False
         )
         
-        # Define GET method for /items
         items_resource = api.root.add_resource("items")
+
+        # Define GET method for /items
         items_get_method = items_resource.add_method("GET",
             authorization_type=apigw.AuthorizationType.IAM,
             integration=apigw.AwsIntegration(
@@ -57,10 +71,32 @@ class TodoApiStack(Stack):
             )
         )
 
+        # Define POST method for /items
+        items_post_method = items_resource.add_method("POST",
+            authorization_type=apigw.AuthorizationType.IAM,
+            integration=apigw.AwsIntegration(
+                service="lambda",
+                region=Aws.REGION,
+                proxy=True,
+                path=f"2015-03-31/functions/{upsert_items_function.function_arn}/invocations"
+            )
+        )
+        
+        # Define PUT method for /items
+        items_put_method = items_resource.add_method("PUT",
+            authorization_type=apigw.AuthorizationType.IAM,
+            integration=apigw.AwsIntegration(
+                service="lambda",
+                region=Aws.REGION,
+                proxy=True,
+                path=f"2015-03-31/functions/{upsert_items_function.function_arn}/invocations"
+            )
+        )
+
         # Define Dev resources
-        dev_alias = _lambda.Alias(self, "DevAlias",
+        get_items_dev_alias = _lambda.Alias(self, "DevAlias",
             alias_name="dev",
-            version=version
+            version=get_items_version
         )
 
         dev_deployment = apigw.Deployment(self, "DevApiDeployment", api=api)
@@ -68,12 +104,12 @@ class TodoApiStack(Stack):
             deployment=dev_deployment,
             stage_name="dev",
             variables={
-                "lambdaAlias": dev_alias.alias_name
+                "lambdaAlias": get_items_dev_alias.alias_name
             }
         )
 
         # Permission to invoke Dev Lambda
-        dev_alias.add_permission("DevStageInvokeDevAliasPermission",
+        get_items_dev_alias.add_permission("DevStageInvokeDevAliasPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
