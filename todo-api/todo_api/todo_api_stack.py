@@ -1,5 +1,6 @@
 from aws_cdk import (
     Stack,
+    aws_dynamodb as dynamo,
     aws_lambda as _lambda,
     aws_apigateway as apigw,
     aws_iam as iam,
@@ -12,13 +13,31 @@ class TodoApiStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # Define a Lambda function for our GET API
+        # Define a DynamoDB table
+        items_table = dynamo.Table(
+            self, "ItemsTable",
+            partition_key=dynamo.Attribute(
+                name="user_id",
+                type=dynamo.AttributeType.STRING
+            ),
+            sort_key=dynamo.Attribute(
+                name="date_created",
+                type=dynamo.AttributeType.STRING
+            )
+        )
+
+        # Define a consumer Lambda function for our GET API
         get_items_function = _lambda.Function(self, "GetItems",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="getItems.handler",
             code=_lambda.Code.from_asset("lambdas")
         )
+
+        get_items_function.add_environment("TABLE_NAME", items_table.table_name)
         version = get_items_function.current_version
+
+        # Grant our consumer Lambda permission to read from DynamoDB
+        items_table.grant_read_data(get_items_function)
 
         # Define the REST API
         api = apigw.RestApi(self, "DeploymentStagesAPI",
