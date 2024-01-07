@@ -30,34 +30,25 @@ class TodoApiStack(Stack):
         get_items_function = _lambda.Function(self, "GetItems",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="get_items.handler",
-            code=_lambda.Code.from_asset("lambdas/get_items")
+            code=_lambda.Code.from_asset("lambda/get_items")
         )
-
         get_items_function.add_environment("TABLE_NAME", items_table.table_name)
-        get_items_version = get_items_function.current_version
-
-        # Grant our consumer Lambda permission to read from DynamoDB
         items_table.grant_read_data(get_items_function)
 
         # Define a producer Lambda function for the POST / PUT verbs
         upsert_items_function = _lambda.Function(self, "UpsertItems",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="upsert_items.handler",
-            code=_lambda.Code.from_asset("lambdas/uspsert_items")
+            code=_lambda.Code.from_asset("lambda/upsert_items")
         )
-
         upsert_items_function.add_environment("TABLE_NAME", items_table.table_name)
-        upsert_items_version = upsert_items_function.current_version
-
-        # Grant our producer Lambda permission to write to DynamoDB
         items_table.grant_write_data(upsert_items_function)
 
-        # Define the REST API
+        # Define the REST API - deploy "latestDeployment" by default
         api = apigw.RestApi(self, "DeploymentStagesAPI",
             rest_api_name="todo-api",
-            deploy=False
+            deploy=True
         )
-        
         items_resource = api.root.add_resource("items")
 
         # Define GET method for /items
@@ -93,29 +84,13 @@ class TodoApiStack(Stack):
             )
         )
 
-        # Define Dev resources
-        get_items_dev_alias = _lambda.Alias(self, "DevAlias",
-            alias_name="dev",
-            version=get_items_version
-        )
-
-        dev_deployment = apigw.Deployment(self, "DevApiDeployment", api=api)
-        dev_stage = apigw.Stage(self, "DevApiStage",
-            deployment=dev_deployment,
-            stage_name="dev",
-            variables={
-                "lambdaAlias": get_items_dev_alias.alias_name
-            }
-        )
-
-        # Permission to invoke Dev Lambda
-        get_items_dev_alias.add_permission("DevStageInvokeDevAliasPermission",
+        # Permission to invoke get_items Lambda
+        get_items_function.add_permission("APIGWInvokeGetItemsPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
                 method=items_get_method.http_method,
                 path=items_resource.path,
-                stage=dev_stage.stage_name
             )
         )
 
