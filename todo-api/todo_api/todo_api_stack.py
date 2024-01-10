@@ -18,7 +18,7 @@ class TodoApiStack(Stack):
         items_table = dynamo.Table(
             self,
             "ItemsTable",
-            partition_key=dynamo.Attribute(name="Id", type=dynamo.AttributeType.NUMBER),
+            partition_key=dynamo.Attribute(name="Id", type=dynamo.AttributeType.STRING),
         )
 
         # Define a consumer Lambda function for the GET verb
@@ -30,7 +30,6 @@ class TodoApiStack(Stack):
             code=_lambda.Code.from_asset("lambda/get_items"),
             environment={"TABLE_NAME": items_table.table_name},
         )
-        get_items_function.add_environment("TABLE_NAME", items_table.table_name)
         items_table.grant_read_data(get_items_function)
 
         # Define a producer Lambda function for the POST / PUT verbs
@@ -40,8 +39,8 @@ class TodoApiStack(Stack):
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="upsert_items.handler",
             code=_lambda.Code.from_asset("lambda/upsert_items"),
+            environment={"TABLE_NAME": items_table.table_name},
         )
-        upsert_items_function.add_environment("TABLE_NAME", items_table.table_name)
         items_table.grant_write_data(upsert_items_function)
 
         # Define the REST API - deploy "latestDeployment" by default
@@ -86,13 +85,33 @@ class TodoApiStack(Stack):
             ),
         )
 
-        # Permission to invoke get_items Lambda
+        # Permission to invoke get_items Lambda from GET verb
         get_items_function.add_permission(
             "APIGWInvokeGetItemsPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
                 method=items_get_method.http_method,
+                path=items_resource.path,
+            ),
+        )
+
+        # Permission to invoke upsert_items Lambda from POST / PUT verbs
+        upsert_items_function.add_permission(
+            "APIGWInvokeUpsertItemsPOSTPermission",
+            principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
+            action="lambda:InvokeFunction",
+            source_arn=api.arn_for_execute_api(
+                method=items_post_method.http_method,
+                path=items_resource.path,
+            ),
+        )
+        upsert_items_function.add_permission(
+            "APIGWInvokeUpsertItemsPUTPermission",
+            principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
+            action="lambda:InvokeFunction",
+            source_arn=api.arn_for_execute_api(
+                method=items_put_method.http_method,
                 path=items_resource.path,
             ),
         )
