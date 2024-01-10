@@ -18,12 +18,7 @@ class TodoApiStack(Stack):
         items_table = dynamo.Table(
             self,
             "ItemsTable",
-            partition_key=dynamo.Attribute(
-                name="user_id", type=dynamo.AttributeType.STRING
-            ),
-            sort_key=dynamo.Attribute(
-                name="date_created", type=dynamo.AttributeType.STRING
-            ),
+            partition_key=dynamo.Attribute(name="Id", type=dynamo.AttributeType.NUMBER),
         )
 
         # Define a consumer Lambda function for the GET verb
@@ -33,6 +28,7 @@ class TodoApiStack(Stack):
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="get_items.handler",
             code=_lambda.Code.from_asset("lambda/get_items"),
+            environment={"TABLE_NAME": items_table.table_name},
         )
         get_items_function.add_environment("TABLE_NAME", items_table.table_name)
         items_table.grant_read_data(get_items_function)

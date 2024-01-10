@@ -12,9 +12,9 @@ export type TodoItemProps = {
 };
 
 export default function TodoItem(props: TodoItemProps) {
-  const { date, description, completed } = props.item;
+  const { item } = props;
 
-  const [checked, setChecked] = useState(completed);
+  const [checked, setChecked] = useState(item.Completed);
   const handleCheck = (value: boolean) => {
     setChecked(value);
   };
@@ -23,14 +23,14 @@ export default function TodoItem(props: TodoItemProps) {
     <div className={styles.todoItem}>
       <div className={styles.checkboxContainer}>
         <CheckboxWithLabel
-          label={description}
+          label={item.Description}
           defaultChecked={checked}
           setChecked={handleCheck}
         />
       </div>
       <div className={styles.dateContainer}>
         <p>
-          {new Date(date).toLocaleDateString("en-GB", {
+          {new Date(item.DateCreated).toLocaleDateString("en-GB", {
             day: "numeric",
             month: "short",
           })}

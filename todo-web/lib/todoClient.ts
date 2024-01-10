@@ -1,72 +1,72 @@
 let data = [
   {
-    id: 0,
-    date: "2023-11-26T10:10:22.296Z",
-    description: "Finalise Todo app UI and system designs",
-    completed: true,
+    Id: 0,
+    DateCreated: 1704837140643,
+    Description: "Finalise Todo app UI and system designs",
+    Completed: true,
   },
   {
-    id: 1,
-    date: "2023-11-26T10:10:22.296Z",
-    description: "Implement Todo app frontend",
-    completed: false,
+    Id: 1,
+    DateCreated: 1704837240643,
+    Description: "Implement Todo app frontend",
+    Completed: true,
   },
   {
-    id: 2,
-    date: "2023-11-26T10:10:22.296Z",
-    description: "Draft Todo app AWS infrastructure as IaC",
-    completed: false,
+    Id: 2,
+    DateCreated: 1704837340643,
+    Description: "Draft Todo app AWS infrastructure as IaC",
+    Completed: false,
   },
   {
-    id: 3,
-    date: "2023-11-26T10:10:22.296Z",
-    description: "Implement CRUD Lambdas for Todo app",
-    completed: false,
+    Id: 3,
+    DateCreated: 1704837440643,
+    Description: "Implement CRUD Lambdas for Todo app",
+    Completed: false,
   },
   {
-    id: 4,
-    date: "2023-11-26T10:10:22.296Z",
-    description:
+    Id: 4,
+    DateCreated: 1704837540643,
+    Description:
       "Hook up Todo app frontend to backend via API Gateway and Next.js API routes",
-    completed: false,
+    Completed: false,
   },
   {
-    id: 5,
-    date: "2023-11-26T10:10:22.296Z",
-    description: "Run a full test of Todo app",
-    completed: false,
+    Id: 5,
+    DateCreated: 1704837640643,
+    Description: "Run a full test of Todo app",
+    Completed: false,
   },
   {
-    id: 6,
-    date: "2023-11-26T10:10:22.296Z",
-    description: "Fix bugs and clean up code",
-    completed: false,
+    Id: 6,
+    DateCreated: 1704837740643,
+    Description: "Fix bugs and clean up code",
+    Completed: false,
   },
   {
-    id: 7,
-    date: "2023-11-26T10:10:22.296Z",
-    description: "Create documentation for Todo app",
-    completed: false,
+    Id: 7,
+    DateCreated: 1704837840643,
+    Description: "Create documentation for Todo app",
+    Completed: false,
   },
   {
-    id: 8,
-    date: "2023-11-26T10:10:22.296Z",
-    description: "Bask in glory!",
-    completed: false,
+    Id: 8,
+    DateCreated: 1704837940643,
+    Description: "Bask in glory! Dynamo BATCH!!",
+    Completed: false,
   },
 ];
 
 export type TodoEntry = {
-  id: number;
-  date: string;
-  description: string;
-  completed: boolean;
+  Id: number;
+  DateCreated: number;
+  Description: string;
+  Completed: boolean;
 };
 
 export type TodoEntryInput = {
-  date: string;
-  description: string;
-  completed: boolean;
+  DateCreated: number;
+  Description: string;
+  Completed: boolean;
 };
 
 export async function getTodoEntries(): Promise<TodoEntry[]> {
@@ -77,20 +77,20 @@ export async function getTodoEntries(): Promise<TodoEntry[]> {
 
 export async function upsertTodoEntry(item: TodoEntryInput): Promise<number> {
   return new Promise((resolve) => {
-    const id = data.length * (Date.now() % 100000);
-    data.push({ ...item, id });
+    const Id = data.length * (Date.now() % 100000);
+    data.push({ ...item, Id });
     resolve(200);
   });
 }
 
-export async function deleteTodoEntry(id: number): Promise<number> {
+export async function deleteTodoEntry(Id: number): Promise<number> {
   return new Promise((resolve, reject) => {
     let found = false;
 
     for (let i = 0; i < data.length && !found; ++i) {
-      if (data[i].id === id) {
+      if (data[i].Id === Id) {
         found = true;
-        data.splice(id, 1);
+        data.splice(Id, 1);
       }
     }
 

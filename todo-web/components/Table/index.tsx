@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import utilStyles from "@/styles/utilities.css";
 import styles from "./styles.css";
 import type { TodoEntry, TodoEntryInput } from "@/lib/todoClient";
@@ -15,12 +15,12 @@ export default function Table(props: TableProps) {
   const [items, setItems] = useState<TodoEntry[]>(props.items);
 
   const addItem = (item: TodoEntryInput) => {
-    const itemWithId = { ...item, id: items.length };
+    const itemWithId = { ...item, Id: items.length };
     setItems([...items, itemWithId]);
   };
 
   const deleteItem = (id: number) => {
-    const filtered = items.filter((item) => item.id !== id);
+    const filtered = items.filter((item) => item.Id !== id);
     setItems(filtered);
   };
 
@@ -38,14 +38,10 @@ export default function Table(props: TableProps) {
       </div>
       <div>
         {items.map((item, i) => (
-          <>
-            <TodoItem
-              key={item.id}
-              item={item}
-              deleteItem={() => deleteItem(item.id)}
-            />
+          <Fragment key={item.Id}>
+            <TodoItem item={item} deleteItem={() => deleteItem(item.Id)} />
             {i < items.length - 1 && <hr />}
-          </>
+          </Fragment>
         ))}
       </div>
     </div>
