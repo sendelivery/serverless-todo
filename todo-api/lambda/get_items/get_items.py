@@ -4,15 +4,16 @@ import json
 import logging
 import os
 
-logger = logging.getLogger(__name__)
 dyn = boto3.resource("dynamodb")
 table_name = os.environ["TABLE_NAME"]
 
 
 def handler(event, context):
+    logger = logging.getLogger(__name__)
+
     items = []
 
-    table = get_table()
+    table = get_table(logger)
 
     try:
         scan_kwargs = {}
@@ -34,9 +35,8 @@ def handler(event, context):
         )
         raise
 
-    # Convert the decimals that come out of Dynamo into JSON serialisable integers
+    # Convert the decimal date that come out of Dynamo into a JSON serialisable integer
     for item in items:
-        item["Id"] = int(item["Id"])
         item["DateCreated"] = int(item["DateCreated"])
 
     items = sorted(items, key=lambda x: x["DateCreated"])
@@ -47,7 +47,7 @@ def handler(event, context):
     }
 
 
-def get_table():
+def get_table(logger):
     """
     Determines if our table exists and returns it to the caller if it does.
     """
