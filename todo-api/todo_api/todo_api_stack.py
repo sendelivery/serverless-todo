@@ -40,7 +40,7 @@ class TodoApiStack(Stack):
             environment={"TABLE_NAME": items_table.table_name},
             layers=[dynamo_lambda_layer],
         )
-        items_table.grant_read_data(get_items_function)
+        items_table.grant(get_items_function, "dynamodb:DescribeTable", "dynamodb:Scan")
 
         # Define a producer Lambda function for the POST / PUT verbs
         upsert_items_function = _lambda.Function(
@@ -52,7 +52,26 @@ class TodoApiStack(Stack):
             environment={"TABLE_NAME": items_table.table_name},
             layers=[dynamo_lambda_layer],
         )
-        items_table.grant_write_data(upsert_items_function)
+        items_table.grant(
+            upsert_items_function,
+            "dynamodb:DescribeTable",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem",
+        )
+
+        # Define a Lambda function for the DELETE verb
+        delete_item_function = _lambda.Function(
+            self,
+            "DeleteItems",
+            runtime=_lambda.Runtime.PYTHON_3_9,
+            handler="delete_item.handler",
+            code=_lambda.Code.from_asset("lambda/delete_item"),
+            environment={"TABLE_NAME": items_table.table_name},
+            layers=[dynamo_lambda_layer],
+        )
+        items_table.grant(
+            delete_item_function, "dynamodb:DescribeTable", "dynamodb:DeleteItem"
+        )
 
         # Define the REST API - deploy "latestDeployment" by default
         api = apigw.RestApi(
@@ -96,25 +115,35 @@ class TodoApiStack(Stack):
             ),
         )
 
-        # Permission to invoke get_items Lambda from GET verb
+        # Define DELETE method for /items
+        items_delete_method = items_resource.add_method(
+            "DELETE",
+            authorization_type=apigw.AuthorizationType.IAM,
+            integration=apigw.AwsIntegration(
+                service="lambda",
+                region=Aws.REGION,
+                proxy=True,
+                path=f"2015-03-31/functions/{delete_item_function.function_arn}/invocations",
+            ),
+        )
+
+        # Permission to invoke the get_items Lambda from GET verb
         get_items_function.add_permission(
             "APIGWInvokeGetItemsPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
-                method=items_get_method.http_method,
-                path=items_resource.path,
+                method=items_get_method.http_method, path=items_resource.path
             ),
         )
 
-        # Permission to invoke upsert_items Lambda from POST / PUT verbs
+        # Permission to invoke the upsert_items Lambda from POST / PUT verbs
         upsert_items_function.add_permission(
             "APIGWInvokeUpsertItemsPOSTPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
-                method=items_post_method.http_method,
-                path=items_resource.path,
+                method=items_post_method.http_method, path=items_resource.path
             ),
         )
         upsert_items_function.add_permission(
@@ -122,8 +151,17 @@ class TodoApiStack(Stack):
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
-                method=items_put_method.http_method,
-                path=items_resource.path,
+                method=items_put_method.http_method, path=items_resource.path
+            ),
+        )
+
+        # Permission to invoke the delete_item Lambda from DELETE verb
+        delete_item_function.add_permission(
+            "APIGWInvokeDeleteItemsPermission",
+            principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
+            action="lambda:InvokeFunction",
+            source_arn=api.arn_for_execute_api(
+                method=items_delete_method.http_method, path=items_resource.path
             ),
         )
 
