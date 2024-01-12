@@ -15,9 +15,9 @@ def handler(event, context):
     item = json.loads(event["body"])
 
     if event["requestContext"]["httpMethod"] == "POST":
-        response = create_item(item, table, logger)
+        response = create_item(item)
     elif event["requestContext"]["httpMethod"] == "PUT":
-        response = update_item(item, table, logger)
+        response = update_item(item)
     else:
         logger.info("Unsupported HTTP Method", event["requestContext"])
 
@@ -28,7 +28,7 @@ def handler(event, context):
     }
 
 
-def create_item(item, table, logger):
+def create_item(item):
     try:
         id = str(uuid.uuid4())
         table.put_item(
@@ -50,7 +50,7 @@ def create_item(item, table, logger):
         raise
 
 
-def update_item(item, table, logger):
+def update_item(item):
     try:
         id = item["Id"]
 
