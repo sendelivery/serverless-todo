@@ -1,21 +1,17 @@
-import boto3
 from botocore.exceptions import ClientError
 import json
 import logging
-import os
+from tododb_utils import get_table
 import uuid
 
-dyn = boto3.resource("dynamodb")
-table_name = os.environ["TABLE_NAME"]
+
+logger = logging.getLogger(__name__)
+table = get_table(logger)
 
 
 def handler(event, context):
-    logger = logging.getLogger(__name__)
+    logger.info(event, context)
 
-    print("event: {}".format(json.dumps(event)))
-    print(context)
-
-    table = get_table(logger)
     item = json.loads(event["body"])
 
     if event["requestContext"]["httpMethod"] == "POST":
@@ -23,32 +19,13 @@ def handler(event, context):
     elif event["requestContext"]["httpMethod"] == "PUT":
         response = update_item(item, table, logger)
     else:
-        logger.info("Unsupported HTTP Method", event)
+        logger.info("Unsupported HTTP Method", event["requestContext"])
 
     return {
         "statusCode": 200,
         "headers": {"Content-Type": "text/plain"},
         "body": response,
     }
-
-
-def get_table(logger):
-    """
-    Determines if our table exists and returns it to the caller if it does.
-    """
-    try:
-        table = dyn.Table(table_name)
-        table.load()
-    except ClientError as err:
-        logger.error(
-            "Ran into an error when trying to get table %s. %s: %s",
-            table_name,
-            err.response["Error"]["Code"],
-            err.response["Error"]["Message"],
-        )
-        raise
-
-    return table
 
 
 def create_item(item, table, logger):

@@ -21,6 +21,15 @@ class TodoApiStack(Stack):
             partition_key=dynamo.Attribute(name="Id", type=dynamo.AttributeType.STRING),
         )
 
+        # Define a Lambda layer for interacting with DynamoDB
+        dynamo_lambda_layer = _lambda.LayerVersion(
+            self,
+            "TodoDBUtils",
+            code=_lambda.Code.from_asset("layer"),
+            description="Utility functions for interacting with our Todo items database.",
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_9],
+        )
+
         # Define a consumer Lambda function for the GET verb
         get_items_function = _lambda.Function(
             self,
@@ -29,6 +38,7 @@ class TodoApiStack(Stack):
             handler="get_items.handler",
             code=_lambda.Code.from_asset("lambda/get_items"),
             environment={"TABLE_NAME": items_table.table_name},
+            layers=[dynamo_lambda_layer],
         )
         items_table.grant_read_data(get_items_function)
 
@@ -40,6 +50,7 @@ class TodoApiStack(Stack):
             handler="upsert_items.handler",
             code=_lambda.Code.from_asset("lambda/upsert_items"),
             environment={"TABLE_NAME": items_table.table_name},
+            layers=[dynamo_lambda_layer],
         )
         items_table.grant_write_data(upsert_items_function)
 

@@ -1,19 +1,15 @@
-import boto3
 from botocore.exceptions import ClientError
 import json
 import logging
-import os
+from tododb_utils import get_table
 
-dyn = boto3.resource("dynamodb")
-table_name = os.environ["TABLE_NAME"]
+
+logger = logging.getLogger(__name__)
+table = get_table(logger)
 
 
 def handler(event, context):
-    logger = logging.getLogger(__name__)
-
     items = []
-
-    table = get_table(logger)
 
     try:
         scan_kwargs = {}
@@ -45,22 +41,3 @@ def handler(event, context):
         "statusCode": 200,
         "body": json.dumps({"data": items}),
     }
-
-
-def get_table(logger):
-    """
-    Determines if our table exists and returns it to the caller if it does.
-    """
-    try:
-        table = dyn.Table(table_name)
-        table.load()
-    except ClientError as err:
-        logger.error(
-            "Ran into an error when trying to get table %s. %s: %s",
-            table_name,
-            err.response["Error"]["Code"],
-            err.response["Error"]["Message"],
-        )
-        raise
-
-    return table
