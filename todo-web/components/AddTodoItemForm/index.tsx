@@ -47,9 +47,9 @@ export default function AddTodoItemForm(props: AddTodoItemFormProps) {
     }
 
     const todoItem: TodoEntryInput = {
-      date: new Date().toISOString(),
-      description: formData.get("itemDescription") as string,
-      completed: false,
+      DateCreated: new Date().getTime(),
+      Description: formData.get("itemDescription") as string,
+      Completed: false,
     };
 
     // TODO: Cannot use async / await in client components
