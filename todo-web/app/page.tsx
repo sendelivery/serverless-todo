@@ -1,13 +1,17 @@
 import Table from "@/components/Table";
-import { getTodoEntries, TodoEntry } from "@/lib/todoClient";
+import { todoApiEndpoint, todoApiKey } from "@/lib/consts";
+import type { TodoEntry } from "@/lib/todoClient";
 
 export default async function Page() {
-  // TODO: use context here?
-  const items: TodoEntry[] = await getTodoEntries();
+  const response = await fetch(`${todoApiEndpoint}`, {
+    headers: {
+      "x-api-key": todoApiKey,
+    },
+    next: { revalidate: 7200 },
+  });
 
-  return (
-    <>
-      <Table items={items} />
-    </>
-  );
+  const data = await response.json();
+  const items: TodoEntry[] = data;
+
+  return <Table items={items} />;
 }
