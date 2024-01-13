@@ -75,14 +75,24 @@ class TodoApiStack(Stack):
 
         # Define the REST API - deploy "latestDeployment" by default
         api = apigw.RestApi(
-            self, "DeploymentStagesAPI", rest_api_name="todo-api", deploy=True
+            self, "DeploymentStagesApi", rest_api_name="todo-api", deploy=True
         )
         items_resource = api.root.add_resource("items")
+
+        # Let's create a usage plan and API key for our API stage
+        # We don't need to worry about rate or burst limiting.
+        plan = api.add_usage_plan("TodoApiUsagePlan", name="TodoUsagePlan")
+        key = api.add_api_key("TodoApiKey")
+        plan.add_api_key(key)
+
+        # Associate the plan to our API stage
+        plan.add_api_stage(stage=api.deployment_stage)
 
         # Define GET method for /items
         items_get_method = items_resource.add_method(
             "GET",
-            authorization_type=apigw.AuthorizationType.IAM,
+            authorization_type=None,
+            api_key_required=True,
             integration=apigw.AwsIntegration(
                 service="lambda",
                 region=Aws.REGION,
@@ -94,7 +104,8 @@ class TodoApiStack(Stack):
         # Define POST method for /items
         items_post_method = items_resource.add_method(
             "POST",
-            authorization_type=apigw.AuthorizationType.IAM,
+            authorization_type=None,
+            api_key_required=True,
             integration=apigw.AwsIntegration(
                 service="lambda",
                 region=Aws.REGION,
@@ -106,7 +117,8 @@ class TodoApiStack(Stack):
         # Define PUT method for /items
         items_put_method = items_resource.add_method(
             "PUT",
-            authorization_type=apigw.AuthorizationType.IAM,
+            authorization_type=None,
+            api_key_required=True,
             integration=apigw.AwsIntegration(
                 service="lambda",
                 region=Aws.REGION,
@@ -118,7 +130,8 @@ class TodoApiStack(Stack):
         # Define DELETE method for /items
         items_delete_method = items_resource.add_method(
             "DELETE",
-            authorization_type=apigw.AuthorizationType.IAM,
+            authorization_type=None,
+            api_key_required=True,
             integration=apigw.AwsIntegration(
                 service="lambda",
                 region=Aws.REGION,
@@ -129,7 +142,7 @@ class TodoApiStack(Stack):
 
         # Permission to invoke the get_items Lambda from GET verb
         get_items_function.add_permission(
-            "APIGWInvokeGetItemsPermission",
+            "ApiGWInvokeGetItemsPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
@@ -139,7 +152,7 @@ class TodoApiStack(Stack):
 
         # Permission to invoke the upsert_items Lambda from POST / PUT verbs
         upsert_items_function.add_permission(
-            "APIGWInvokeUpsertItemsPOSTPermission",
+            "ApiGWInvokeUpsertItemsPOSTPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
@@ -147,7 +160,7 @@ class TodoApiStack(Stack):
             ),
         )
         upsert_items_function.add_permission(
-            "APIGWInvokeUpsertItemsPUTPermission",
+            "ApiGWInvokeUpsertItemsPUTPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
@@ -157,7 +170,7 @@ class TodoApiStack(Stack):
 
         # Permission to invoke the delete_item Lambda from DELETE verb
         delete_item_function.add_permission(
-            "APIGWInvokeDeleteItemsPermission",
+            "ApiGWInvokeDeleteItemsPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.arn_for_execute_api(
@@ -168,7 +181,7 @@ class TodoApiStack(Stack):
         # Define outputs
         CfnOutput(
             self,
-            "ApiHostUrl",
-            value=f"{api.rest_api_id}.execute-api.{Aws.REGION}.amazonaws.com",
-            description="API Host URL",
+            "TodoApiKeyArn",
+            value=key.key_arn,
+            description="Todo API Key ARN",
         )
