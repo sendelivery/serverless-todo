@@ -1,16 +1,16 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent } from "react";
-import { type TodoEntry } from "@/lib/todoClient";
 import styles from "./styles.css";
 import { SimpleButton } from "../Button";
-import { createEntry } from "@/app/actions";
 
 export type AddTodoEntryFormProps = {
-  addEntry: (newEntry: TodoEntry) => void;
+  formAction: (formData: FormData) => void;
 };
 
-export default function AddTodoEntryForm({ addEntry }: AddTodoEntryFormProps) {
+export default function AddTodoEntryForm({
+  formAction,
+}: AddTodoEntryFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [disabled, setDisabled] = useState(true);
 
@@ -20,17 +20,15 @@ export default function AddTodoEntryForm({ addEntry }: AddTodoEntryFormProps) {
     setDisabled(text ? false : true);
   }
 
-  function formAction(formData: FormData) {
+  function handleFormAction(formData: FormData) {
     formRef.current!.reset();
     setDisabled(true);
-    createEntry(formData).then((todoEntry) => {
-      addEntry(todoEntry);
-    });
+    formAction(formData);
   }
 
   return (
     <div className={styles.container}>
-      <form action={formAction} ref={formRef} className={styles.form}>
+      <form action={handleFormAction} ref={formRef} className={styles.form}>
         <input
           name="description"
           className={styles.textInput}
