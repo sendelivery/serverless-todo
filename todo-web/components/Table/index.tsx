@@ -3,30 +3,29 @@
 import { Fragment, useState } from "react";
 import utilStyles from "@/styles/utilities.css";
 import styles from "./styles.css";
-import type { TodoEntry, TodoEntryInput } from "@/lib/todoClient";
+import { type TodoEntry } from "@/lib/todoClient";
 import TodoItem from "../TodoItem";
-import AddTodoItemForm from "../AddTodoItemForm";
+import AddTodoEntryForm from "../AddTodoEntryForm";
 
 type TableProps = {
-  items: TodoEntry[];
+  entries: TodoEntry[];
 };
 
 export default function Table(props: TableProps) {
-  const [items, setItems] = useState<TodoEntry[]>(props.items);
+  const [entries, setEntries] = useState<TodoEntry[]>(props.entries);
 
-  const addItem = (item: TodoEntryInput) => {
-    const itemWithId = { ...item, Id: items.length };
-    setItems([...items, itemWithId]);
+  const addEntry = (newEntry: TodoEntry) => {
+    setEntries([...entries, newEntry]);
   };
 
-  const deleteItem = (id: number) => {
-    const filtered = items.filter((item) => item.Id !== id);
-    setItems(filtered);
+  const deleteEntry = (id: string) => {
+    const filtered = entries.filter((item) => item.Id !== id);
+    setEntries(filtered);
   };
 
   return (
     <div className={styles.table}>
-      <AddTodoItemForm action={addItem} />
+      <AddTodoEntryForm addEntry={addEntry} />
       <div className={styles.headingBar}>
         <div className={styles.firstHeading}>
           <h2 className={utilStyles.headingXl}>Description</h2>
@@ -37,10 +36,10 @@ export default function Table(props: TableProps) {
         <div className={styles.fillerBlock}></div>
       </div>
       <div>
-        {items.map((item, i) => (
+        {entries.map((item, i) => (
           <Fragment key={item.Id}>
-            <TodoItem item={item} deleteItem={() => deleteItem(item.Id)} />
-            {i < items.length - 1 && <hr />}
+            <TodoItem item={item} deleteItem={() => deleteEntry(item.Id)} />
+            {i < entries.length - 1 && <hr />}
           </Fragment>
         ))}
       </div>

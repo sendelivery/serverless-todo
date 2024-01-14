@@ -15,6 +15,7 @@ export function SimpleButton({
         buttonAttributes.disabled && styles.disabled
       }`}
       onClick={buttonAttributes.onClick}
+      disabled={buttonAttributes.disabled}
     ></button>
   );
 }
