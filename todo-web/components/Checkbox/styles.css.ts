@@ -31,6 +31,7 @@ const styledCheckbox = style({
   width: 25,
   backgroundColor: "#eee",
   borderRadius: 25,
+  transition: "background-color 0.2s ease",
   selectors: {
     // On a mouse hover of any elements in our parent, set the backgroud to grey.
     [`${label}:hover input ~ &`]: { backgroundColor: "#ccc" },

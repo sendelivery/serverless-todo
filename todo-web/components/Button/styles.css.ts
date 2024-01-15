@@ -6,6 +6,10 @@ const simpleButton = style({
   width: 25,
   height: 25,
   cursor: "pointer",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  transition: "background-color 0.2s ease",
 });
 
 const unset = style({
@@ -14,9 +18,6 @@ const unset = style({
 
 const plus = style({
   backgroundColor: "#3498db",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
   selectors: {
     // Create both stems required for the plus
     "&:before, &:after": {
@@ -38,9 +39,6 @@ const plus = style({
 // Create a custom X (cross) button
 const cross = style({
   backgroundColor: "#ccc",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
   selectors: {
     // Create both stems required for the cross
     "&:before, &:after": {
