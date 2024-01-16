@@ -1,4 +1,4 @@
-import Table from "@/components/Table";
+import TodoSection from "@/components/TodoSection";
 import { todoApiEndpoint, todoApiKey } from "@/lib/consts";
 import { type TodoEntry } from "@/lib/todoClient";
 
@@ -11,5 +11,5 @@ export default async function Page() {
   });
   const entries: TodoEntry[] = await response.json();
 
-  return <Table entries={entries} />;
+  return <TodoSection entries={entries} />;
 }

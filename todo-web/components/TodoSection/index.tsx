@@ -8,11 +8,11 @@ import TodoItem from "../TodoItem";
 import AddTodoEntryForm from "../AddTodoEntryForm";
 import { createEntry } from "@/app/actions";
 
-type TableProps = {
+type TodoSectionProps = {
   entries: TodoEntry[];
 };
 
-export default function Table(props: TableProps) {
+export default function TodoSection(props: TodoSectionProps) {
   const [entries, setEntries] = useState<TodoEntry[]>(props.entries);
 
   function addEntry(formData: FormData) {
