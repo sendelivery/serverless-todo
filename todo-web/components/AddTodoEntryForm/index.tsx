@@ -1,5 +1,3 @@
-"use client";
-
 import { useRef, useState, type ChangeEvent } from "react";
 import styles from "./styles.css";
 import { SimpleButton } from "../Button";
@@ -31,6 +29,8 @@ export default function AddTodoEntryForm({
       <form action={handleFormAction} ref={formRef} className={styles.form}>
         <input
           name="description"
+          type="text"
+          required
           className={styles.textInput}
           onChange={handleDescriptionChange}
           placeholder="Write a short description to add to your Todo list"

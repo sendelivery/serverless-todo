@@ -1,5 +1,3 @@
-"use client";
-
 import { type TodoEntry } from "@/lib/todoClient";
 import styles from "./styles.css";
 import CheckboxWithLabel from "../Checkbox";
