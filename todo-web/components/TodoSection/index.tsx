@@ -1,12 +1,13 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useContext, useState } from "react";
 import utilStyles from "@/styles/utilities.css";
 import styles from "./styles.css";
 import { type TodoEntry } from "@/lib/todoClient";
 import TodoItem from "../TodoItem";
 import AddTodoEntryForm from "../AddTodoEntryForm";
 import { createEntry } from "@/app/actions";
+import { ToastQueueContext } from "../ToastQueueProvider";
 
 type TodoSectionProps = {
   entries: TodoEntry[];
@@ -14,12 +15,24 @@ type TodoSectionProps = {
 
 export default function TodoSection(props: TodoSectionProps) {
   const [entries, setEntries] = useState<TodoEntry[]>(props.entries);
+  const { enqueueToast } = useContext(ToastQueueContext);
 
   function addEntry(formData: FormData) {
-    createEntry(formData).then((newEntry) => {
-      setEntries([...entries, newEntry]);
-      // TODO: we should invalidate the GET cache tag here...
-    });
+    createEntry(formData)
+      .then((newEntry) => {
+        setEntries([...entries, newEntry]);
+        enqueueToast({
+          level: "info",
+          message: "Successfully created new todo entry.",
+        });
+        // TODO: we should invalidate the GET cache tag here...
+      })
+      .catch((error) => {
+        enqueueToast({
+          level: "error",
+          message: `${error}`,
+        });
+      });
   }
 
   const deleteEntry = (id: string) => {

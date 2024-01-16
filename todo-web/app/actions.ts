@@ -23,6 +23,10 @@ export async function createEntry(formData: FormData) {
     body: JSON.stringify(todoEntryInput),
   });
 
+  if (!response.ok) {
+    throw new Error("Unable to create new todo entry. Please try again later.");
+  }
+
   const id = await response.text();
 
   const todoEntry: TodoEntry = {

@@ -6,6 +6,7 @@ const simpleButton = style({
   width: 25,
   height: 25,
   cursor: "pointer",
+  flexShrink: 0,
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
@@ -60,6 +61,32 @@ const cross = style({
   },
 });
 
+const dismiss = style({
+  backgroundColor: "#00000000",
+  borderRadius: 0,
+  cursor: "pointer",
+  transition: "background-color 0.2s ease",
+  selectors: {
+    // Create both stems required for the cross
+    "&:before, &:after": {
+      content: " ",
+      backgroundColor: "#858585",
+      width: 2,
+      height: 16,
+      position: "absolute",
+    },
+    "&:before": {
+      transform: "rotate(45deg)",
+    },
+    "&:after": {
+      transform: "rotate(-45deg)",
+    },
+    "&:hover": {
+      backgroundColor: "#d9d9d966",
+    },
+  },
+});
+
 const disabled = style({
   backgroundColor: "#eee",
   cursor: "default",
@@ -68,4 +95,4 @@ const disabled = style({
   },
 });
 
-export default { simpleButton, unset, plus, cross, disabled };
+export default { simpleButton, unset, plus, cross, dismiss, disabled };

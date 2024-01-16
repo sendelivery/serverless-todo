@@ -2,7 +2,7 @@ import { ButtonHTMLAttributes } from "react";
 import styles from "./styles.css";
 
 export type SimpleButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  simpleStyle?: "plus" | "cross" | "unset";
+  simpleStyle?: "plus" | "cross" | "dismiss" | "unset";
 };
 
 export function SimpleButton({

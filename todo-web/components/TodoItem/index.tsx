@@ -1,7 +1,7 @@
-import { type TodoEntry } from "@/lib/todoClient";
-import styles from "./styles.css";
-import CheckboxWithLabel from "../Checkbox";
 import { useState } from "react";
+import styles from "./styles.css";
+import { type TodoEntry } from "@/lib/todoClient";
+import CheckboxWithLabel from "../Checkbox";
 import { SimpleButton } from "../Button";
 
 export type TodoItemProps = {
