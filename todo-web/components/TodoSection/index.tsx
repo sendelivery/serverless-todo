@@ -6,7 +6,7 @@ import styles from "./styles.css";
 import { type TodoEntry } from "@/lib/todoClient";
 import TodoItem from "../TodoItem";
 import AddTodoEntryForm from "../AddTodoEntryForm";
-import { createEntry } from "@/app/actions";
+import { deleteEntry, postEntry } from "@/app/actions";
 import { ToastQueueContext } from "../ToastQueueProvider";
 
 type TodoSectionProps = {
@@ -18,27 +18,34 @@ export default function TodoSection(props: TodoSectionProps) {
   const { enqueueToast } = useContext(ToastQueueContext);
 
   function addEntry(formData: FormData) {
-    createEntry(formData)
+    postEntry(formData)
       .then((newEntry) => {
         setEntries([...entries, newEntry]);
         enqueueToast({
           level: "info",
           message: "Successfully created new todo entry.",
         });
-        // TODO: we should invalidate the GET cache tag here...
       })
       .catch((error) => {
-        enqueueToast({
-          level: "error",
-          message: `${error}`,
-        });
+        enqueueToast({ level: "error", message: `${error}`, lifespan: "inf" });
       });
   }
 
-  const deleteEntry = (id: string) => {
-    const filtered = entries.filter((item) => item.Id !== id);
-    setEntries(filtered);
-  };
+  function removeEntry(id: string) {
+    deleteEntry(id)
+      .then(() => {
+        setEntries((currentEntries) =>
+          currentEntries.filter((entry) => entry.Id !== id)
+        );
+        enqueueToast({
+          level: "info",
+          message: "Successfully deleted todo entry.",
+        });
+      })
+      .catch((error) => {
+        enqueueToast({ level: "error", message: `${error}`, lifespan: "inf" });
+      });
+  }
 
   return (
     <div className={styles.table}>
@@ -55,7 +62,7 @@ export default function TodoSection(props: TodoSectionProps) {
       <div>
         {entries.map((item, i) => (
           <Fragment key={item.Id}>
-            <TodoItem item={item} deleteItem={() => deleteEntry(item.Id)} />
+            <TodoItem item={item} deleteItem={() => removeEntry(item.Id)} />
             {i < entries.length - 1 && <hr />}
           </Fragment>
         ))}

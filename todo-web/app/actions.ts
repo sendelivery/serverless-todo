@@ -1,9 +1,9 @@
 "use server";
 
-import { todoApiEndpoint, todoApiKey } from "@/lib/consts";
+import { todoApiEndpoint, todoApiKey } from "@/lib/serverConsts";
 import { type TodoEntry, type TodoEntryInput } from "@/lib/todoClient";
 
-export async function createEntry(formData: FormData) {
+export async function postEntry(formData: FormData) {
   let input = formData.get("description") as string;
   input = input.trim();
 
@@ -35,4 +35,16 @@ export async function createEntry(formData: FormData) {
   };
 
   return todoEntry;
+}
+
+export async function deleteEntry(id: string) {
+  const response = await fetch(todoApiEndpoint, {
+    method: "DELETE",
+    headers: { "x-api-key": todoApiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ Id: id }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to delete todo entry. Please try again later.");
+  }
 }

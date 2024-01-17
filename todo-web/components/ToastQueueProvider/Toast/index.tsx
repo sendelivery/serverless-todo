@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { SimpleButton } from "../../Button";
 import styles from "./styles.css";
 
+const FADE_ANIMATION_DURATION = 200;
+
 export type ToastProps = {
   message: string;
   level: "info" | "error";
-  ephemeral?: boolean;
-  lifespan?: number;
+  lifespan: number | "inf";
   remove: () => void;
 };
 
@@ -19,9 +20,12 @@ export default function Toast(props: ToastProps) {
   const [fade, setFade] = useState<"fadeIn" | "fadeOut">("fadeIn");
   useEffect(() => {
     if (fade === "fadeIn") {
+      if (props.lifespan === "inf") {
+        return;
+      }
       setTimeout(() => setFade("fadeOut"), props.lifespan);
     } else {
-      setTimeout(props.remove, 200);
+      setTimeout(props.remove, FADE_ANIMATION_DURATION);
     }
   }, [fade]);
 

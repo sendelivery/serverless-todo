@@ -8,13 +8,11 @@ type ToastMetadata = {
   id: string;
   level: "info" | "error";
   message: string;
-  lifespan: number;
+  lifespan: number | "inf";
 };
 
-type EnqueueToastProps = {
-  level: "info" | "error";
-  message: string;
-  lifespan?: number;
+type EnqueueToastProps = Pick<ToastMetadata, "level" | "message"> & {
+  lifespan?: number | "inf";
 };
 
 type ToastQueueContext = {
