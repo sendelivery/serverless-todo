@@ -5,7 +5,7 @@ import {
   todoApiEndpoint,
   todoApiKey,
 } from "@/lib/serverConsts";
-import { type TodoEntry, type TodoEntryInput } from "@/lib/todoClient";
+import { type TodoEntry, type TodoEntryInput } from "@/lib/types";
 import { revalidateTag } from "next/cache";
 
 export async function serverPostEntry(formData: FormData) {

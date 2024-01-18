@@ -3,7 +3,7 @@
 import { Fragment, useContext, useState } from "react";
 import utilStyles from "@/styles/utilities.css";
 import styles from "./styles.css";
-import { type TodoEntry } from "@/lib/todoClient";
+import { type TodoEntry } from "@/lib/types";
 import TodoItem from "../TodoItem";
 import AddTodoEntryForm from "../AddTodoEntryForm";
 import {

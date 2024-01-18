@@ -3,7 +3,7 @@ import {
   todoApiEndpoint,
   todoApiKey,
 } from "@/lib/serverConsts";
-import { type TodoEntry } from "@/lib/todoClient";
+import { type TodoEntry } from "@/lib/types";
 import ToastQueueProvider from "@/components/ToastQueueProvider";
 import TodoSection from "@/components/TodoSection";
 
