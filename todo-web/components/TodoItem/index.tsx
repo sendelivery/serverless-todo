@@ -1,4 +1,3 @@
-import { useState } from "react";
 import styles from "./styles.css";
 import { type TodoEntry } from "@/lib/todoClient";
 import CheckboxWithLabel from "../Checkbox";
@@ -6,15 +5,15 @@ import { SimpleButton } from "../Button";
 
 export type TodoItemProps = {
   item: TodoEntry;
+  checkItem: () => void;
   deleteItem: () => void;
 };
 
 export default function TodoItem(props: TodoItemProps) {
   const { item } = props;
 
-  const [checked, setChecked] = useState(item.Completed);
-  const handleCheck = (value: boolean) => {
-    setChecked(value);
+  const handleCheck = () => {
+    props.checkItem();
   };
 
   return (
@@ -22,7 +21,7 @@ export default function TodoItem(props: TodoItemProps) {
       <div className={styles.checkboxContainer}>
         <CheckboxWithLabel
           label={item.Description}
-          defaultChecked={checked}
+          defaultChecked={item.Completed}
           setChecked={handleCheck}
         />
       </div>

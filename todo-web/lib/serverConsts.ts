@@ -13,3 +13,5 @@ function tryToRetrieveEnvironmentVariables() {
 
 export const [todoApiEndpoint, todoApiKey] =
   tryToRetrieveEnvironmentVariables();
+
+export const ENTRIES_CACHE_TAG = "entries_cache";

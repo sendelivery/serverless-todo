@@ -1,14 +1,18 @@
-import { todoApiEndpoint, todoApiKey } from "@/lib/serverConsts";
+import {
+  ENTRIES_CACHE_TAG,
+  todoApiEndpoint,
+  todoApiKey,
+} from "@/lib/serverConsts";
 import { type TodoEntry } from "@/lib/todoClient";
 import ToastQueueProvider from "@/components/ToastQueueProvider";
 import TodoSection from "@/components/TodoSection";
 
 export default async function Page() {
-  // No need to worry about caching or revalidation because our app has no routing.
   const response = await fetch(todoApiEndpoint, {
     headers: {
       "x-api-key": todoApiKey,
     },
+    next: { tags: [ENTRIES_CACHE_TAG] },
   });
   const entries: TodoEntry[] = await response.json();
 

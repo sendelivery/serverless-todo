@@ -6,7 +6,11 @@ import styles from "./styles.css";
 import { type TodoEntry } from "@/lib/todoClient";
 import TodoItem from "../TodoItem";
 import AddTodoEntryForm from "../AddTodoEntryForm";
-import { deleteEntry, postEntry } from "@/app/actions";
+import {
+  serverDeleteEntry,
+  serverPostEntry,
+  serverPutEntry,
+} from "@/app/actions";
 import { ToastQueueContext } from "../ToastQueueProvider";
 
 type TodoSectionProps = {
@@ -15,10 +19,11 @@ type TodoSectionProps = {
 
 export default function TodoSection(props: TodoSectionProps) {
   const [entries, setEntries] = useState<TodoEntry[]>(props.entries);
+
   const { enqueueToast } = useContext(ToastQueueContext);
 
   function addEntry(formData: FormData) {
-    postEntry(formData)
+    serverPostEntry(formData)
       .then((newEntry) => {
         setEntries([...entries, newEntry]);
         enqueueToast({
@@ -31,8 +36,28 @@ export default function TodoSection(props: TodoSectionProps) {
       });
   }
 
+  function updateEntry(id: string, completed: boolean) {
+    serverPutEntry(id, completed)
+      .then(() => {
+        const updatedEntries = entries.map((entry) => {
+          if (entry.Id === id) {
+            entry.Completed = completed;
+          }
+          return entry;
+        });
+        setEntries(updatedEntries);
+        enqueueToast({
+          level: "info",
+          message: "Successfully updated todo entry.",
+        });
+      })
+      .catch((error) => {
+        enqueueToast({ level: "error", message: `${error}`, lifespan: "inf" });
+      });
+  }
+
   function removeEntry(id: string) {
-    deleteEntry(id)
+    serverDeleteEntry(id)
       .then(() => {
         setEntries((currentEntries) =>
           currentEntries.filter((entry) => entry.Id !== id)
@@ -60,9 +85,13 @@ export default function TodoSection(props: TodoSectionProps) {
         <div className={styles.fillerBlock}></div>
       </div>
       <div>
-        {entries.map((item, i) => (
-          <Fragment key={item.Id}>
-            <TodoItem item={item} deleteItem={() => removeEntry(item.Id)} />
+        {entries.map((entry, i) => (
+          <Fragment key={entry.Id}>
+            <TodoItem
+              item={entry}
+              checkItem={() => updateEntry(entry.Id, !entry.Completed)}
+              deleteItem={() => removeEntry(entry.Id)}
+            />
             {i < entries.length - 1 && <hr />}
           </Fragment>
         ))}
