@@ -52,10 +52,10 @@ export default function TodoSection(props: TodoSectionProps) {
       <AddTodoEntryForm formAction={addEntry} />
       <div className={styles.headingBar}>
         <div className={styles.firstHeading}>
-          <h2 className={utilStyles.headingXl}>Description</h2>
+          <h2 className={utilStyles.headingLg}>Description</h2>
         </div>
         <div className={styles.secondHeading}>
-          <h2 className={utilStyles.headingXl}>Date Added</h2>
+          <h2 className={utilStyles.headingLg}>Date Added</h2>
         </div>
         <div className={styles.fillerBlock}></div>
       </div>

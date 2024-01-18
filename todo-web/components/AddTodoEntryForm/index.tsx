@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent } from "react";
+import utilStyles from "@/styles/utilities.css";
 import styles from "./styles.css";
 import { SimpleButton } from "../Button";
 
@@ -26,18 +27,21 @@ export default function AddTodoEntryForm({
 
   return (
     <div className={styles.container}>
-      <form action={handleFormAction} ref={formRef} className={styles.form}>
-        <input
-          name="description"
-          type="text"
-          required
-          className={styles.textInput}
-          onChange={handleDescriptionChange}
-          placeholder="Write a short description to add to your Todo list"
-          autoComplete="off"
-        />
-        <SimpleButton simpleStyle="plus" disabled={disabled} type="submit" />
-      </form>
+      <h2 className={utilStyles.headingLg}>Create New Entry</h2>
+      <div className={styles.formContainer}>
+        <form action={handleFormAction} ref={formRef} className={styles.form}>
+          <input
+            name="description"
+            type="text"
+            required
+            className={styles.textInput}
+            onChange={handleDescriptionChange}
+            placeholder="Write a short description to add to your Todo list"
+            autoComplete="off"
+          />
+          <SimpleButton simpleStyle="plus" disabled={disabled} type="submit" />
+        </form>
+      </div>
     </div>
   );
 }

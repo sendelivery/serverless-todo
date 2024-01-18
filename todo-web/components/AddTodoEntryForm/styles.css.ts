@@ -1,10 +1,18 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
 const container = style({
-  margin: "2rem",
+  margin: "1.5rem",
+  marginBottom: "5rem",
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
 });
 
-globalStyle(`${container} *`, { fontSize: "medium" });
+const formContainer = style({
+  flex: 1,
+});
+
+globalStyle(`${formContainer} *`, { fontSize: "medium" });
 
 const form = style({
   display: "flex",
@@ -16,7 +24,7 @@ const form = style({
 
 const textInput = style({
   height: "1.5rem",
-  width: "60%",
+  width: "85%",
 });
 
-export default { container, form, textInput };
+export default { container, form, formContainer, textInput };
