@@ -1,9 +1,5 @@
-*.swp
-package-lock.json
-__pycache__
-.pytest_cache
-.venv
-*.egg-info
+# Scripts, commands, notes, etc. used during development
+.dev/
 
 # CDK asset staging directory
 .cdk.staging
