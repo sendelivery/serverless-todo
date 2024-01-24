@@ -12,12 +12,12 @@ table = get_table(logger)
 def handler(event, context):
     logger.info(event, context)
 
-    item = json.loads(event["body"])
+    entry = json.loads(event["body"])
 
     if event["requestContext"]["httpMethod"] == "POST":
-        response = create_item(item)
+        response = create_entry(entry)
     elif event["requestContext"]["httpMethod"] == "PUT":
-        response = update_item(item)
+        response = update_entry(entry)
     else:
         logger.info("Unsupported HTTP Method", event["requestContext"])
 
@@ -28,42 +28,42 @@ def handler(event, context):
     }
 
 
-def create_item(item):
+def create_entry(entry):
     try:
         id = str(uuid.uuid4())
         table.put_item(
             Item={
                 "Id": id,
-                "DateCreated": item["DateCreated"],
-                "Description": item["Description"],
-                "Completed": item["Completed"],
+                "DateCreated": entry["DateCreated"],
+                "Description": entry["Description"],
+                "Completed": entry["Completed"],
             }
         )
-        logger.info(f"Created item with Id: {id}, and attributes: {item}")
+        logger.info(f"Created entry with Id: {id}, and attributes: {entry}")
         return id
     except ClientError as err:
         logger.error(
-            "Failed when posting new item due to: %s: %s",
+            "Failed when posting new entry due to: %s: %s",
             err.response["Error"]["Code"],
             err.response["Error"]["Message"],
         )
         raise
 
 
-def update_item(item):
+def update_entry(entry):
     try:
-        id = item["Id"]
+        id = entry["Id"]
 
         table.update_item(
             Key={"Id": id},
             UpdateExpression="SET Completed = :val1",
-            ExpressionAttributeValues={":val1": item["Completed"]},
+            ExpressionAttributeValues={":val1": entry["Completed"]},
         )
-        logger.info(f"Updated item with Id: {id} to Completed: {item['Completed']}")
-        return f"Successfully updated item {id}"
+        logger.info(f"Updated entry with Id: {id} to Completed: {entry['Completed']}")
+        return f"Successfully updated entry {id}"
     except ClientError as err:
         logger.error(
-            "Failed when posting new item due to: %s: %s",
+            "Failed when posting new entry due to: %s: %s",
             err.response["Error"]["Code"],
             err.response["Error"]["Message"],
         )
