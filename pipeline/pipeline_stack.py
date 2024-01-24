@@ -13,6 +13,7 @@ class ServerlessTodoPipelineStack(Stack):
         pipeline = pipelines.CodePipeline(
             self,
             "TodoPipeline",
+            pipeline_name="TodoPipeline",
             synth=pipelines.ShellStep(
                 "Synth",
                 input=pipelines.CodePipelineSource.git_hub(
