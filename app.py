@@ -20,15 +20,16 @@ ServerlessTodoPipelineStack(
     ),
 )
 
-# The below stage exist purely for developers to create ephemeral environmenst using the deploy_ephemeral script.
+# The below stage exist purely for developers to create ephemeral environmenst using the
+# deploy_ephemeral script. It will only synthesize if we supply the required context.
 prefix = app.node.try_get_context("ephemeral_prefix")
-prefix = "DefaultPrefix-Todo" if prefix is None else prefix
+if prefix:
+    ServerlessTodoPipelineStage(
+        app,
+        f"{prefix}Stage",
+        prefix=prefix,
+        stateful_removal_policy=RemovalPolicy.DESTROY,
+    )
 
-ServerlessTodoPipelineStage(
-    app,
-    f"{prefix}Stage",
-    prefix=prefix,
-    stateful_removal_policy=RemovalPolicy.DESTROY,
-)
 
 app.synth()
