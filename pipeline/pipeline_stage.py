@@ -1,5 +1,5 @@
 from constructs import Construct
-from aws_cdk import Stage
+from aws_cdk import RemovalPolicy, Stage
 
 from backend.stateless.stateless_stack import StatelessStack
 from backend.stateful.stateful_stack import StatefulStack
@@ -10,13 +10,27 @@ class ServerlessTodoPipelineStage(Stage):
     def endpoint(self):
         return self._endpoint
 
-    def __init__(self, scope: Construct, id: str, **kwargs):
+    def __init__(
+        self,
+        scope: Construct,
+        id: str,
+        prefix: str,
+        stateful_removal_policy: RemovalPolicy = RemovalPolicy.RETAIN,
+        **kwargs,
+    ):
         super().__init__(scope, id, **kwargs)
 
-        stateful = StatefulStack(self, "ServerlessTodoStatefulStack", **kwargs)
+        stateful = StatefulStack(
+            self,
+            f"{prefix}StatefulStack",
+            prefix=prefix,
+            removal_policy=stateful_removal_policy,
+            **kwargs,
+        )
         stateless = StatelessStack(
             self,
-            "ServerlessTodoStatelessStack",
+            f"{prefix}StatelessStack",
+            prefix=prefix,
             entries_table=stateful.entries_table,
             **kwargs,
         )

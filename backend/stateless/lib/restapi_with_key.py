@@ -37,7 +37,7 @@ class RestApiWithApiKey(Construct):
         # Define the REST API - deploy "latestDeployment" by default
         self._rest_api = RestApi(
             self,
-            "DeploymentStagesApi",
+            f"{id}DeploymentStage",
             rest_api_name=name,
             deploy=True,
         )
@@ -46,14 +46,14 @@ class RestApiWithApiKey(Construct):
         # Let's create an API key and usage plan for our API stage
         # We don't need to worry about rate or burst limiting.
         self._api_key = self._rest_api.add_api_key(
-            f"{name}Key",
+            f"{id}Key",
             api_key_name=f"{name}Key",
             # Consider setting the value of the API key with:
             # value=...
         )
 
         self._usage_plan = self._rest_api.add_usage_plan(
-            f"{name}UsagePlan", name=f"{name}UsagePlan"
+            f"{id}UsagePlan", name=f"{name}UsagePlan"
         )
         self._usage_plan.add_api_key(self._api_key)
 

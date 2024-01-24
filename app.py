@@ -1,34 +1,34 @@
 #!/usr/bin/env python3
 import os
-import aws_cdk as cdk
+from aws_cdk import (
+    App,
+    Environment,
+    RemovalPolicy,
+)
+from pipeline.pipeline_stack import (
+    ServerlessTodoPipelineStack,
+    ServerlessTodoPipelineStage,
+)
 
-from pipeline.pipeline_stack import ServerlessTodoPipelineStack
-
-app = cdk.App()
+app = App()
 
 ServerlessTodoPipelineStack(
     app,
-    "ServerlessTodoPipelineStack",
-    env=cdk.Environment(
+    "TodoPipelineStack",
+    env=Environment(
         account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")
     ),
 )
 
-# stateful_stack = StatefulStack(
-#     app,
-#     "TodoDbStack",
-#     env=cdk.Environment(
-#         account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")
-#     ),
-# )
+# The below stage exist purely for developers to create ephemeral environmenst using the deploy_ephemeral script.
+prefix = app.node.try_get_context("ephemeral_prefix")
+prefix = "DefaultPrefix-Todo" if prefix is None else prefix
 
-# StatelessStack(
-#     app,
-#     "TodoApiStack",
-#     entries_table=stateful_stack.entries_table,
-#     env=cdk.Environment(
-#         account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")
-#     ),
-# )
+ServerlessTodoPipelineStage(
+    app,
+    f"{prefix}Stage",
+    prefix=prefix,
+    stateful_removal_policy=RemovalPolicy.DESTROY,
+)
 
 app.synth()

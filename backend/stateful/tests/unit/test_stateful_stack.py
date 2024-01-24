@@ -1,7 +1,7 @@
 import aws_cdk as core
 import aws_cdk.assertions as assertions
 
-from app.stateful.stateful_stack import StatefulStack
+from backend.stateful.stateful_stack import StatefulStack
 # from app.todo_api_stack import TodoApiStack
 
 

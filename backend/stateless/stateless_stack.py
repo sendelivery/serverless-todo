@@ -24,15 +24,20 @@ class StatelessStack(Stack):
         return self._endpoint
 
     def __init__(
-        self, scope: Construct, construct_id: str, entries_table: Table, **kwargs
+        self,
+        scope: Construct,
+        construct_id: str,
+        prefix: str,
+        entries_table: Table,
+        **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Define a Lambda layer for interacting with DynamoDB
         dynamo_lambda_layer = _lambda.LayerVersion(
             self,
-            "TodoDbUtils",
-            layer_version_name="TodoDbUtils",
+            f"{prefix}DbUtils",
+            layer_version_name=f"{prefix}DbUtils",
             code=_lambda.Code.from_asset("backend/stateless/lambda/layer"),
             description="Utility functions for interacting with our Todo entries database.",
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_9],
@@ -41,8 +46,8 @@ class StatelessStack(Stack):
         # Define a consumer Lambda function for the GET verb
         get_entries_function = _lambda.Function(
             self,
-            "GetEntries",
-            function_name="TodoGetEntries",
+            f"{prefix}GetEntries",
+            function_name=f"{prefix}GetEntries",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="get_entries.handler",
             code=_lambda.Code.from_asset("backend/stateless/lambda/get_entries"),
@@ -56,8 +61,8 @@ class StatelessStack(Stack):
         # Define producer Lambda functions for the POST / PUT and DELETE verbs
         upsert_entries_function = _lambda.Function(
             self,
-            "UpsertEntries",
-            function_name="TodoUpsertEntries",
+            f"{prefix}UpsertEntries",
+            function_name=f"{prefix}UpsertEntries",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="upsert_entries.handler",
             code=_lambda.Code.from_asset("backend/stateless/lambda/upsert_entries"),
@@ -72,8 +77,8 @@ class StatelessStack(Stack):
         )
         delete_entries_function = _lambda.Function(
             self,
-            "DeleteItem",
-            function_name="TodoDeleteEntries",
+            f"{prefix}DeleteItem",
+            function_name=f"{prefix}DeleteEntries",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="delete_entries.handler",
             code=_lambda.Code.from_asset("backend/stateless/lambda/delete_entries"),
@@ -86,7 +91,10 @@ class StatelessStack(Stack):
 
         # Define a rest API with an API key using our custom construct
         api = RestApiWithApiKey(
-            self, id="TodoApi", name="TodoApi", resource_name="entries"
+            self,
+            id=f"{prefix}Api",
+            name=f"{prefix}Api",
+            resource_name="entries",
         )
         self._endpoint = api.rest_api.url
 
@@ -144,7 +152,7 @@ class StatelessStack(Stack):
 
         # Permission to invoke the get_entries Lambda from GET verb
         get_entries_function.add_permission(
-            "ApiGWInvokeGetEntriesPermission",
+            f"{prefix}ApiGWInvokeGetEntriesPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.rest_api.arn_for_execute_api(
@@ -154,7 +162,7 @@ class StatelessStack(Stack):
 
         # Permission to invoke the upsert_entries Lambda from POST / PUT verbs
         upsert_entries_function.add_permission(
-            "ApiGWInvokeUpsertEntriesPOSTPermission",
+            f"{prefix}ApiGWInvokeUpsertEntriesPOSTPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.rest_api.arn_for_execute_api(
@@ -162,7 +170,7 @@ class StatelessStack(Stack):
             ),
         )
         upsert_entries_function.add_permission(
-            "ApiGWInvokeUpsertEntriesPUTPermission",
+            f"{prefix}ApiGWInvokeUpsertEntriesPUTPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.rest_api.arn_for_execute_api(
@@ -172,7 +180,7 @@ class StatelessStack(Stack):
 
         # Permission to invoke the delete_entries Lambda from DELETE verb
         delete_entries_function.add_permission(
-            "ApiGWInvokeDeleteEntriesPermission",
+            f"{prefix}ApiGWInvokeDeleteEntriesPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
             source_arn=api.rest_api.arn_for_execute_api(
@@ -183,7 +191,7 @@ class StatelessStack(Stack):
         # Define outputs
         CfnOutput(
             self,
-            "TodoApiKeyArn",
+            f"{prefix}ApiKeyArn",
             value=api.api_key.key_arn,
             description="Todo API Key ARN",
         )

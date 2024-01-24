@@ -10,25 +10,25 @@ class ServerlessTodoPipelineStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        # Pipeline code goes here
         pipeline = pipelines.CodePipeline(
             self,
-            "ServerlessTodoPipeline",
+            "TodoPipeline",
             synth=pipelines.ShellStep(
                 "Synth",
                 input=pipelines.CodePipelineSource.git_hub(
                     "sendelivery/serverless-todo-app",
-                    "chore/refactor-directory-for-cicd-pipeline",  # TODO: temporary, switch back to main
+                    "main",
                 ),
                 commands=[
                     "npm install -g aws-cdk",
-                    "pip install -r ./backend/requirements.txt",  # TODO: unsure about this step...
+                    "pip install -r requirements.txt",
                     "cdk synth",
+                    # TODO: "pytest tests"
                 ],
             ),
         )
 
         deploy = ServerlessTodoPipelineStage(
-            self, "ServerlessTodoPipelineStage", **kwargs
+            self, "TodoPipelineStage", prefix="Todo", **kwargs
         )
-        deploy_stage = pipeline.add_stage(deploy)
+        pipeline.add_stage(deploy)
