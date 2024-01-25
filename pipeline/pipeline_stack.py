@@ -18,7 +18,7 @@ class ServerlessTodoPipelineStack(Stack):
                 "Synth",
                 input=pipelines.CodePipelineSource.git_hub(
                     "sendelivery/serverless-todo-app",
-                    "feature/cicd-pipeline",  # TODO: temporary, switch back to main
+                    "main",
                 ),
                 commands=[
                     "npm install -g aws-cdk",

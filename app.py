@@ -20,7 +20,7 @@ ServerlessTodoPipelineStack(
     ),
 )
 
-# The below stage exist purely for developers to create ephemeral environmenst using the
+# The below stage exists purely for developers to create ephemeral environments using the
 # deploy_ephemeral script. It will only synthesize if we supply the required context.
 prefix = app.node.try_get_context("ephemeral_prefix")
 if prefix:
