@@ -9,7 +9,7 @@ table = get_table(logger)
 
 
 def handler(event, context):
-    items = []
+    entries = []
 
     try:
         scan_kwargs = {}
@@ -20,24 +20,24 @@ def handler(event, context):
             if start_key:
                 scan_kwargs["ExclusiveStartKey"] = start_key
             response = table.scan(**scan_kwargs)
-            items.extend(response.get("Items", []))
+            entries.extend(response.get("Items", []))
             start_key = response.get("LastEvaluatedKey", None)
             done = start_key is None
     except ClientError as err:
         logger.error(
-            "Failed when scanning for items due to: %s: %s",
+            "Failed when scanning for entries due to: %s: %s",
             err.response["Error"]["Code"],
             err.response["Error"]["Message"],
         )
         raise
 
     # Convert the decimal date that come out of Dynamo into a JSON serialisable integer
-    for item in items:
-        item["DateCreated"] = int(item["DateCreated"])
+    for entry in entries:
+        entry["DateCreated"] = int(entry["DateCreated"])
 
-    items = sorted(items, key=lambda x: x["DateCreated"])
+    entries = sorted(entries, key=lambda entry: entry["DateCreated"])
 
     return {
         "statusCode": 200,
-        "body": json.dumps(items),
+        "body": json.dumps(entries),
     }

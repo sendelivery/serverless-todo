@@ -1,2 +1,8 @@
+__pycache__
+
 # Scripts, commands, notes, etc. used during development
 .dev/
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out

@@ -16,10 +16,10 @@ def handler(event, context):
 
     try:
         table.delete_item(Key={"Id": id})
-        logger.info(f"Deleted item with Id: {id}")
+        logger.info(f"Deleted entry with Id: {id}")
     except ClientError as err:
         logger.error(
-            "Failed when deleting new item due to: %s: %s",
+            "Failed when deleting new entry due to: %s: %s",
             err.response["Error"]["Code"],
             err.response["Error"]["Message"],
         )
