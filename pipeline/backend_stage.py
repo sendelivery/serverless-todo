@@ -5,7 +5,7 @@ from backend.stateless.stateless_stack import StatelessStack
 from backend.stateful.stateful_stack import StatefulStack
 
 
-class ServerlessTodoPipelineStage(Stage):
+class ServerlessTodoBackendStage(Stage):
     @property
     def endpoint(self):
         return self._endpoint

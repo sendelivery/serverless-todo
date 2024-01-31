@@ -1,9 +1,11 @@
 from constructs import Construct
 from aws_cdk import (
     Stack,
+    Stage,
     pipelines as pipelines,
 )
-from .pipeline_stage import ServerlessTodoPipelineStage
+from .backend_stage import ServerlessTodoBackendStage
+from backend.stateless.temp_web_stack import FargateTest
 
 
 class ServerlessTodoPipelineStack(Stack):
@@ -18,7 +20,7 @@ class ServerlessTodoPipelineStack(Stack):
                 "Synth",
                 input=pipelines.CodePipelineSource.git_hub(
                     "sendelivery/serverless-todo-app",
-                    "main",
+                    "feature/fargate-web-app",
                 ),
                 commands=[
                     "npm install -g aws-cdk",
@@ -27,9 +29,32 @@ class ServerlessTodoPipelineStack(Stack):
                     # TODO: "pytest tests"
                 ],
             ),
+            publish_assets_in_parallel=False,
         )
 
-        deploy = ServerlessTodoPipelineStage(
-            self, "TodoPipelineStage", prefix="Todo", **kwargs
+        deploy = ServerlessTodoBackendStage(
+            self, "TodoBackendStage", prefix="Todo", **kwargs
         )
         pipeline.add_stage(deploy)
+
+        pipeline.add_stage(
+            TempWebStage(self, "TempWebStage", **kwargs),
+            pre=[
+                pipelines.CodeBuildStep(
+                    "BuildAndUploadDockerImage",
+                    commands=["cd web/", "docker build -t test-todo"],
+                )
+            ],
+        )
+
+
+class TempWebStage(Stage):
+    def __init__(
+        self,
+        scope: Construct,
+        id: str,
+        **kwargs,
+    ):
+        super().__init__(scope, id, **kwargs)
+
+        FargateTest(self, "FargateTest", **kwargs)
