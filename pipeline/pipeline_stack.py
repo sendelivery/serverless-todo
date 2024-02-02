@@ -80,7 +80,7 @@ class ServerlessTodoPipelineStack(Stack):
                     "BuildAndUploadDockerImage",
                     commands=[
                         "cd web/",
-                        "echo Logging in to Amazon ECR"
+                        "echo Logging in to Amazon ECR",
                         "aws ecr get-login-password | docker login --username AWS --password-stdin 460848972690.dkr.ecr.eu-west-2.amazonaws.com",
                         "docker build -t test-todo .",
                         "docker tag serverless-todo-web-app:latest 460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest",
