@@ -47,7 +47,6 @@ class ServerlessTodoPipelineStack(Stack):
             self,
             "TodoPipeline",
             pipeline_name="TodoPipeline",
-            role=role,
             # code_build_defaults=pipelines.CodeBuildOptions(
             # TODO: should I set the build environment here?
             #     build_environment=
@@ -78,6 +77,7 @@ class ServerlessTodoPipelineStack(Stack):
             pre=[
                 pipelines.CodeBuildStep(
                     "BuildAndUploadDockerImage",
+                    role=role,
                     commands=[
                         "cd web/",
                         "echo Logging in to Amazon ECR",
