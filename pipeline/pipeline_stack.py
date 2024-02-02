@@ -18,7 +18,7 @@ class ServerlessTodoPipelineStack(Stack):
         role = iam.Role(
             self,
             "AllowUploadToEcrRepository",
-            assumed_by=iam.ServicePrincipal("codepipeline.amazonaws.com"),
+            assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
         )
         role.attach_inline_policy(
             iam.Policy(
