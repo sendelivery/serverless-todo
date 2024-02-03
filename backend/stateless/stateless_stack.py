@@ -1,11 +1,12 @@
 from constructs import Construct
 from aws_cdk.aws_dynamodb import Table
 from aws_cdk import (
-    CfnOutput,
+    # CfnOutput,
     Stack,
     aws_lambda as _lambda,
     aws_apigateway as apigw,
     aws_iam as iam,
+    aws_ssm as ssm,
     Aws,
 )
 from backend.stateless.lib.restapi_with_key import RestApiWithApiKey
@@ -16,19 +17,19 @@ from backend.stateless.lib.restapi_with_key import RestApiWithApiKey
 
 
 class StatelessStack(Stack):
-    @property
-    def endpoint(self):
-        """
-        The API Gateway endpoint of our backend application.
-        """
-        return self._endpoint
+    # @property
+    # def endpoint(self):
+    #     """
+    #     The API Gateway endpoint of our backend application.
+    #     """
+    #     return self._endpoint
 
-    @property
-    def api_key(self):
-        """
-        The API Gateway API key of our backend application.
-        """
-        return self._api_key
+    # @property
+    # def api_key(self):
+    #     """
+    #     The API Gateway API key of our backend application.
+    #     """
+    #     return self._api_key
 
     def __init__(
         self,
@@ -194,17 +195,30 @@ class StatelessStack(Stack):
             ),
         )
 
-        # Lets expose our API Gateway endpoint and key as a CFN outputs so our web stage can access
-        # them later.
-        self._endpoint = CfnOutput(
+        # # Lets expose our API Gateway endpoint and key as a CFN outputs so our web stage can access
+        # # them later.
+        # self._endpoint = CfnOutput(
+        #     self,
+        #     f"{prefix}Endpoint",
+        #     export_name=f"{prefix}ApiEndpoint",
+        #     value=api.rest_api.url,
+        # )
+        # self._api_key = CfnOutput(
+        #     self,
+        #     f"{prefix}ApiKey",
+        #     export_name=f"{prefix}ApiKey",
+        #     value=api.api_key_value,
+        # )
+
+        ssm.StringParameter(
             self,
-            f"{prefix}Endpoint",
-            export_name=f"{prefix}ApiEndpoint",
-            value=api.rest_api.url,
+            f"{prefix}ApiEndpoint",
+            parameter_name=f"{prefix}ApiEndpoint",
+            string_value=api.rest_api.url,
         )
-        self._api_key = CfnOutput(
+        ssm.StringParameter(
             self,
             f"{prefix}ApiKey",
-            export_name=f"{prefix}ApiKey",
-            value=api.api_key_value,
+            parameter_name=f"{prefix}ApiKey",
+            string_value=api.api_key_value,
         )

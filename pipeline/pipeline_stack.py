@@ -51,11 +51,16 @@ class ServerlessTodoPipelineStack(Stack):
                     role=CodeBuildExecutionRole(
                         self, "TodoCodeBuildExecutionRole"
                     ).role,
-                    env={
-                        "TODO_API_ENDPOINT": backend.endpoint.import_value,
-                        # "TODO_API_KEY": backend.api_key.import_value,
-                    },
                     commands=[
+                        "echo Setting environments variables...",
+                        'TODO_API_ENDPOINT="$(aws ssm get-parameter --name TodoApiEndpoint --query Parameter.Value)"',
+                        """sed -e 's/^"//' -e 's/"$//' <<<"$TODO_API_ENDPOINT" """,
+                        "export TODO_API_ENDPOINT",
+                        'echo "$TODO_API_ENDPOINT"',
+                        'TODO_API_KEY="$(aws ssm get-parameter --name TodoApiKey --query Parameter.Value)"',
+                        """sed -e 's/^"//' -e 's/"$//' <<<"$TODO_API_KEY" """,
+                        "export TODO_API_KEY",
+                        'echo "$TODO_API_KEY"',
                         "cd web/",
                         "echo Logging in to Amazon ECR...",
                         "aws ecr get-login-password | docker login --username AWS --password-stdin 460848972690.dkr.ecr.eu-west-2.amazonaws.com",

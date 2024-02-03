@@ -5,7 +5,6 @@ from aws_cdk.aws_apigateway import (
     RestApi,
     Resource,
     UsagePlan,
-    IApiKey,
 )
 
 
@@ -28,7 +27,7 @@ class RestApiWithApiKey(Construct):
         return self._usage_plan
 
     @property
-    def api_key_value(self) -> IApiKey:
+    def api_key_value(self) -> str:
         return self._api_key_value
 
     def __init__(
