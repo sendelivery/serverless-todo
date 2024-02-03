@@ -37,7 +37,14 @@ class CodeBuildExecutionRole(Construct):
                             ],
                             resources=["*"],
                             effect=iam.Effect.ALLOW,
-                        )
+                        ),
+                        iam.PolicyStatement(
+                            actions=[
+                                "ssm:GetParameter",
+                            ],
+                            resources=["*"],
+                            effect=iam.Effect.ALLOW,
+                        ),
                     ]
                 ),
             )
