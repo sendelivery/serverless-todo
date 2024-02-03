@@ -60,6 +60,8 @@ class ServerlessTodoPipelineStack(Stack):
                         "export TODO_API_KEY",
                         'echo "$TODO_API_KEY"',
                         "cd web/",
+                        'echo TODO_API_ENDPOINT="$TODO_API_ENDPOINT" >> .env.local',
+                        'echo TODO_API_KEY="$TODO_API_KEY" >> .env.local',
                         "echo Logging in to Amazon ECR...",
                         "aws ecr get-login-password | docker login --username AWS --password-stdin 460848972690.dkr.ecr.eu-west-2.amazonaws.com",
                         "docker build -t test-todo .",

@@ -85,7 +85,7 @@ class StatelessStack(Stack):
         )
         delete_entries_function = _lambda.Function(
             self,
-            f"{prefix}DeleteItem",
+            f"{prefix}DeleteEntries",
             function_name=f"{prefix}DeleteEntries",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="delete_entries.handler",
