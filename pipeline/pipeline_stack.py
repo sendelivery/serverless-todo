@@ -2,46 +2,17 @@ from constructs import Construct
 from aws_cdk import (
     Stack,
     Stage,
-    aws_iam as iam,
     pipelines as pipelines,
     # aws_codebuild as codebuild,
 )
 from .backend_stage import ServerlessTodoBackendStage
 from backend.stateless.temp_web_stack import FargateTest
+from .lib.codebuild_execution_role import CodeBuildExecutionRole
 
 
 class ServerlessTodoPipelineStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
-
-        # An IAM role to allow codebuild to push to an ECR repository
-        role = iam.Role(
-            self,
-            "AllowUploadToEcrRepository",
-            assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
-        )
-        role.attach_inline_policy(
-            iam.Policy(
-                self,
-                "blahblahID",
-                document=iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            actions=[
-                                "ecr:BatchCheckLayerAvailability",
-                                "ecr:CompleteLayerUpload",
-                                "ecr:GetAuthorizationToken",
-                                "ecr:InitiateLayerUpload",
-                                "ecr:PutImage",
-                                "ecr:UploadLayerPart",
-                            ],
-                            resources=["*"],
-                            effect=iam.Effect.ALLOW,
-                        )
-                    ]
-                ),
-            )
-        )
 
         pipeline = pipelines.CodePipeline(
             self,
@@ -67,20 +38,26 @@ class ServerlessTodoPipelineStack(Stack):
             publish_assets_in_parallel=False,
         )
 
-        deploy = ServerlessTodoBackendStage(
+        backend = ServerlessTodoBackendStage(
             self, "TodoBackendStage", prefix="Todo", **kwargs
         )
-        pipeline.add_stage(deploy)
+        pipeline.add_stage(backend)
 
         pipeline.add_stage(
             TempWebStage(self, "TempWebStage", **kwargs),
             pre=[
                 pipelines.CodeBuildStep(
                     "BuildAndUploadDockerImage",
-                    role=role,
+                    role=CodeBuildExecutionRole(
+                        self, "TodoCodeBuildExecutionRole"
+                    ).role,
+                    env={
+                        "TODO_API_ENDPOINT": backend.endpoint.import_value,
+                        # "TODO_API_KEY": backend.api_key.import_value,
+                    },
                     commands=[
                         "cd web/",
-                        "echo Logging in to Amazon ECR",
+                        "echo Logging in to Amazon ECR...",
                         "aws ecr get-login-password | docker login --username AWS --password-stdin 460848972690.dkr.ecr.eu-west-2.amazonaws.com",
                         "docker build -t test-todo .",
                         "docker tag serverless-todo-web-app:latest 460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest",

@@ -1,12 +1,12 @@
 from constructs import Construct
 from aws_cdk.aws_dynamodb import Table
 from aws_cdk import (
+    CfnOutput,
     Stack,
     aws_lambda as _lambda,
     aws_apigateway as apigw,
     aws_iam as iam,
     Aws,
-    CfnOutput,
 )
 from backend.stateless.lib.restapi_with_key import RestApiWithApiKey
 
@@ -22,6 +22,13 @@ class StatelessStack(Stack):
         The API Gateway endpoint of our backend application.
         """
         return self._endpoint
+
+    @property
+    def api_key(self):
+        """
+        The API Gateway API key of our backend application.
+        """
+        return self._api_key
 
     def __init__(
         self,
@@ -96,7 +103,6 @@ class StatelessStack(Stack):
             name=f"{prefix}Api",
             resource_name="entries",
         )
-        self._endpoint = api.rest_api.url
 
         # Define GET method for /entries
         entries_get_method = api.resource.add_method(
@@ -188,10 +194,17 @@ class StatelessStack(Stack):
             ),
         )
 
-        # Define outputs
-        CfnOutput(
+        # Lets expose our API Gateway endpoint and key as a CFN outputs so our web stage can access
+        # them later.
+        self._endpoint = CfnOutput(
             self,
-            f"{prefix}ApiKeyArn",
-            value=api.api_key.key_arn,
-            description="Todo API Key ARN",
+            f"{prefix}Endpoint",
+            export_name=f"{prefix}ApiEndpoint",
+            value=api.rest_api.url,
+        )
+        self._api_key = CfnOutput(
+            self,
+            f"{prefix}ApiKey",
+            export_name=f"{prefix}ApiKey",
+            value=api.api_key_value,
         )

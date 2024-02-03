@@ -1,3 +1,5 @@
+import secrets
+import string
 from constructs import Construct
 from aws_cdk.aws_apigateway import (
     RestApi,
@@ -26,8 +28,8 @@ class RestApiWithApiKey(Construct):
         return self._usage_plan
 
     @property
-    def api_key(self) -> IApiKey:
-        return self._api_key
+    def api_key_value(self) -> IApiKey:
+        return self._api_key_value
 
     def __init__(
         self, scope: Construct, id: str, name: str, resource_name: str, **kwargs
@@ -44,18 +46,36 @@ class RestApiWithApiKey(Construct):
         self._resource = self._rest_api.root.add_resource(resource_name)
 
         # Let's create an API key and usage plan for our API stage
+
+        # First we'll generate an API key locally, this will only be used to allow our Dockerised
+        # web app to talk to our REST API. If we know the value ahead of time we can include it in
+        # our container's environment variables.
+
+        alphabet = string.ascii_letters + string.digits
+        while True:
+            # Generate a 40 char alphanumeric string with at least one lowercase, one uppercase,
+            # and three numeric characters.
+            api_key_value = "".join(secrets.choice(alphabet) for i in range(40))
+            if (
+                any(c.islower() for c in api_key_value)
+                and any(c.isupper() for c in api_key_value)
+                and sum(c.isdigit() for c in api_key_value) >= 3
+            ):
+                break
+
+        self._api_key_value = api_key_value
+
         # We don't need to worry about rate or burst limiting.
-        self._api_key = self._rest_api.add_api_key(
+        api_key = self._rest_api.add_api_key(
             f"{id}Key",
             api_key_name=f"{name}Key",
-            # Consider setting the value of the API key with:
-            # value=...
+            value=api_key_value,
         )
 
         self._usage_plan = self._rest_api.add_usage_plan(
             f"{id}UsagePlan", name=f"{name}UsagePlan"
         )
-        self._usage_plan.add_api_key(self._api_key)
+        self._usage_plan.add_api_key(api_key)
 
         # Associate the plan to our API stage
         self._usage_plan.add_api_stage(stage=self._rest_api.deployment_stage)
