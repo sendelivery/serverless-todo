@@ -17,4 +17,5 @@ globalStyle(`${todoItem} > ${dateContainer} > p`, {
   margin: "0",
 });
 
-export default { todoItem, checkboxContainer, dateContainer };
+const styles = { todoItem, checkboxContainer, dateContainer };
+export default styles;

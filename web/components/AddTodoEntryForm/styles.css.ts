@@ -27,4 +27,5 @@ const textInput = style({
   width: "85%",
 });
 
-export default { container, form, formContainer, textInput };
+const styles = { container, form, formContainer, textInput };
+export default styles;

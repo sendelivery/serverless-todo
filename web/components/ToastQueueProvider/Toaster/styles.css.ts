@@ -10,4 +10,5 @@ const container = style({
   alignItems: "flex-end",
 });
 
-export default { container };
+const styles = { container };
+export default styles;

@@ -27,6 +27,7 @@ export default function Toast(props: ToastProps) {
     } else {
       setTimeout(props.remove, FADE_ANIMATION_DURATION);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fade]);
 
   return (
