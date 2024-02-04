@@ -43,6 +43,10 @@ class ServerlessTodoPipelineStack(Stack):
         )
         pipeline.add_stage(backend)
 
+        container_repository = (
+            "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app"
+        )
+
         pipeline.add_stage(
             TempWebStage(self, "TempWebStage", **kwargs),
             pre=[
@@ -63,10 +67,10 @@ class ServerlessTodoPipelineStack(Stack):
                         'echo TODO_API_ENDPOINT="$TODO_API_ENDPOINT" >> .env.local',
                         'echo TODO_API_KEY="$TODO_API_KEY" >> .env.local',
                         "echo Logging in to Amazon ECR...",
-                        "aws ecr get-login-password | docker login --username AWS --password-stdin 460848972690.dkr.ecr.eu-west-2.amazonaws.com",
-                        "docker build -t test-todo .",
-                        "docker tag serverless-todo-web-app:latest 460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest",
-                        "docker push 460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest",
+                        f"aws ecr get-login-password | docker login --username AWS --password-stdin {container_repository}",
+                        "docker build -t todo-web-app .",
+                        f"docker tag todo-web-app:latest {container_repository}:latest",
+                        f"docker push {container_repository}:latest",
                     ],
                     # build_environment=codebuild.BuildEnvironment(
                     #     build_image=codebuild.LinuxBuildImage.STANDARD_7_0,

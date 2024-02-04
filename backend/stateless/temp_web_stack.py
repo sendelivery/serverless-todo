@@ -26,18 +26,9 @@ class FargateTest(Stack):
             desired_count=1,
             cpu=512,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
-                image=ecs.ContainerImage.from_registry("amazon/amazon-ecs-sample"),
-                environment={
-                    "TODO_API_ENDPOINT": "https://sbkra0myt3.execute-api.eu-west-2.amazonaws.com/prod/items",
-                    "TODO_API_KEY": "J8PhcjHsmy3Pi91QZ96HM1NqzHmnXdHw6a8o46uv",
-                },
-            ),
-            task_subnets=ec2.SubnetSelection(
-                subnets=[
-                    ec2.Subnet.from_subnet_id(
-                        self, "subnet", "VpcISOLATEDSubnet1Subnet80F07FA0"
-                    )
-                ]
+                image=ecs.ContainerImage.from_registry(
+                    "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
+                )
             ),
             load_balancer_name="application-lb-name",
         )

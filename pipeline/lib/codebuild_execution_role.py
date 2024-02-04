@@ -34,6 +34,8 @@ class CodeBuildExecutionRole(Construct):
                                 "ecr:InitiateLayerUpload",
                                 "ecr:PutImage",
                                 "ecr:UploadLayerPart",
+                                "ecr:BatchGetImage",
+                                "ecr:GetDownloadUrlForLayer",
                             ],
                             resources=["*"],
                             effect=iam.Effect.ALLOW,
