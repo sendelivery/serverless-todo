@@ -1,6 +1,7 @@
 import secrets
 import string
 from constructs import Construct
+from aws_cdk import RemovalPolicy
 from aws_cdk.aws_apigateway import (
     RestApi,
     Resource,
@@ -70,6 +71,7 @@ class RestApiWithApiKey(Construct):
             api_key_name=f"{name}Key",
             value=api_key_value,
         )
+        api_key.apply_removal_policy(RemovalPolicy.DESTROY)
 
         self._usage_plan = self._rest_api.add_usage_plan(
             f"{id}UsagePlan", name=f"{name}UsagePlan"

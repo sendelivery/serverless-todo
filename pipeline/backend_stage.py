@@ -6,13 +6,13 @@ from backend.stateful.stateful_stack import StatefulStack
 
 
 class ServerlessTodoBackendStage(Stage):
-    # @property
-    # def endpoint(self):
-    #     return self._endpoint
+    @property
+    def endpoint(self):
+        return self._endpoint
 
-    # @property
-    # def api_key(self):
-    #     return self._api_key
+    @property
+    def api_key(self):
+        return self._api_key
 
     def __init__(
         self,
@@ -31,7 +31,7 @@ class ServerlessTodoBackendStage(Stage):
             removal_policy=stateful_removal_policy,
             **kwargs,
         )
-        StatelessStack(
+        stateless = StatelessStack(
             self,
             f"{prefix}StatelessStack",
             prefix=prefix,
@@ -39,5 +39,5 @@ class ServerlessTodoBackendStage(Stage):
             **kwargs,
         )
 
-        # self._endpoint = stateless.endpoint
-        # self._api_key = stateless.api_key
+        self._endpoint = stateless.endpoint
+        self._api_key = stateless.api_key

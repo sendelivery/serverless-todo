@@ -3,11 +3,13 @@ from aws_cdk import (
     Stack,
     Stage,
     pipelines as pipelines,
-    # aws_codebuild as codebuild,
 )
+from .networking_stage import ServerlessTodoNetworkingStage
+
 from .backend_stage import ServerlessTodoBackendStage
-from backend.stateless.temp_web_stack import FargateTest
 from .lib.codebuild_execution_role import CodeBuildExecutionRole
+
+from .web_stage import ServerlessTodoWebStage
 
 
 class ServerlessTodoPipelineStack(Stack):
@@ -38,6 +40,11 @@ class ServerlessTodoPipelineStack(Stack):
             publish_assets_in_parallel=False,
         )
 
+        # networking = ServerlessTodoNetworkingStage(
+        #     self, "TodoNetworkingStage", prefix="Todo", **kwargs
+        # )
+        # pipeline.add_stage(networking)
+
         backend = ServerlessTodoBackendStage(
             self, "TodoBackendStage", prefix="Todo", **kwargs
         )
@@ -47,8 +54,20 @@ class ServerlessTodoPipelineStack(Stack):
             "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app"
         )
 
+        # container_environment = {
+        #     "TODO_API_ENDPOINT": backend.endpoint,
+        #     "TODO_API_KEY": backend.api_key,
+        # }
+
         pipeline.add_stage(
-            TempWebStage(self, "TempWebStage", **kwargs),
+            ServerlessTodoWebStage(
+                self,
+                "TempWebStage",
+                prefix="Todo",
+                # vpc=networking.vpc,
+                # container_environment=container_environment,
+                **kwargs,
+            ),
             pre=[
                 pipelines.CodeBuildStep(
                     "BuildAndUploadDockerImage",
@@ -82,15 +101,3 @@ class ServerlessTodoPipelineStack(Stack):
                 )
             ],
         )
-
-
-class TempWebStage(Stage):
-    def __init__(
-        self,
-        scope: Construct,
-        id: str,
-        **kwargs,
-    ):
-        super().__init__(scope, id, **kwargs)
-
-        FargateTest(self, "FargateTest", **kwargs)

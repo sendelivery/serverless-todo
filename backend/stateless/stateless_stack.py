@@ -17,19 +17,19 @@ from backend.stateless.lib.restapi_with_key import RestApiWithApiKey
 
 
 class StatelessStack(Stack):
-    # @property
-    # def endpoint(self):
-    #     """
-    #     The API Gateway endpoint of our backend application.
-    #     """
-    #     return self._endpoint
+    @property
+    def endpoint(self):
+        """
+        The API Gateway endpoint of our backend application.
+        """
+        return self._endpoint
 
-    # @property
-    # def api_key(self):
-    #     """
-    #     The API Gateway API key of our backend application.
-    #     """
-    #     return self._api_key
+    @property
+    def api_key(self):
+        """
+        The API Gateway API key of our backend application.
+        """
+        return self._api_key
 
     def __init__(
         self,
@@ -210,12 +210,14 @@ class StatelessStack(Stack):
         #     value=api.api_key_value,
         # )
 
+        self._endpoint = api.rest_api.url
         ssm.StringParameter(
             self,
             f"{prefix}ApiEndpoint",
             parameter_name=f"{prefix}ApiEndpoint",
             string_value=api.rest_api.url,
         )
+        self._api_key = api.api_key_value
         ssm.StringParameter(
             self,
             f"{prefix}ApiKey",
