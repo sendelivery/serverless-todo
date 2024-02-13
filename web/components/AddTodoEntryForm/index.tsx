@@ -27,7 +27,7 @@ export default function AddTodoEntryForm({
 
   return (
     <div className={styles.container}>
-      <h2 className={utilStyles.headingLg}>Create New Entry</h2>
+      <h2 className={utilStyles.headingLg}>Create New Entry:</h2>
       <div className={styles.formContainer}>
         <form action={handleFormAction} ref={formRef} className={styles.form}>
           <input

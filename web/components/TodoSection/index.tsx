@@ -13,6 +13,21 @@ import {
 } from "@/app/actions";
 import { ToastQueueContext } from "../ToastQueueProvider";
 
+function EmptySection() {
+  return (
+    <div className={utilStyles.centredText}>
+      <h2 className={utilStyles.headingXl}>
+        🎉 Congrats, your Todo list is{" "}
+        <span className={utilStyles.highlightedText}>empty!</span>
+      </h2>
+      <p>
+        <span className={utilStyles.italicText}>Forget something?</span> Add a
+        new entry to your list above.
+      </p>
+    </div>
+  );
+}
+
 type TodoSectionProps = {
   entries: TodoEntry[];
 };
@@ -22,6 +37,7 @@ export default function TodoSection(props: TodoSectionProps) {
 
   const { enqueueToast } = useContext(ToastQueueContext);
 
+  // Below are our 3 server actions for creating, updating, and deleting entries respectively.
   function addEntry(formData: FormData) {
     serverPostEntry(formData)
       .then((newEntry) => {
@@ -72,30 +88,40 @@ export default function TodoSection(props: TodoSectionProps) {
       });
   }
 
+  let body = <EmptySection />;
+
+  if (entries.length) {
+    body = (
+      <>
+        <div className={styles.headingBar}>
+          <div className={styles.firstHeading}>
+            <h2 className={utilStyles.headingLg}>Description</h2>
+          </div>
+          <div className={styles.secondHeading}>
+            <h2 className={utilStyles.headingLg}>Date Added</h2>
+          </div>
+          <div className={styles.fillerBlock}></div>
+        </div>
+        <div>
+          {entries.map((entry, i) => (
+            <Fragment key={entry.Id}>
+              <TodoItem
+                item={entry}
+                checkItem={() => updateEntry(entry.Id, !entry.Completed)}
+                deleteItem={() => removeEntry(entry.Id)}
+              />
+              {i < entries.length - 1 && <hr />}
+            </Fragment>
+          ))}
+        </div>
+      </>
+    );
+  }
+
   return (
     <div className={styles.table}>
       <AddTodoEntryForm formAction={addEntry} />
-      <div className={styles.headingBar}>
-        <div className={styles.firstHeading}>
-          <h2 className={utilStyles.headingLg}>Description</h2>
-        </div>
-        <div className={styles.secondHeading}>
-          <h2 className={utilStyles.headingLg}>Date Added</h2>
-        </div>
-        <div className={styles.fillerBlock}></div>
-      </div>
-      <div>
-        {entries.map((entry, i) => (
-          <Fragment key={entry.Id}>
-            <TodoItem
-              item={entry}
-              checkItem={() => updateEntry(entry.Id, !entry.Completed)}
-              deleteItem={() => removeEntry(entry.Id)}
-            />
-            {i < entries.length - 1 && <hr />}
-          </Fragment>
-        ))}
-      </div>
+      {body}
     </div>
   );
 }

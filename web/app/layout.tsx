@@ -4,12 +4,12 @@ import { Inter } from "next/font/google";
 import styles from "@/styles/root-layout.css";
 import utilStyles from "@/styles/utilities.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], weight: "variable" });
 
 export const metadata: Metadata = {
   title: "Serverless Todo",
   description:
-    "Created for systems design practice and then deviated massively, becoming a fully fledged full-stack app.",
+    "Created for systems design and AWS practice and then deviated massively, becoming a fully fledged full-stack app.",
   icons: "/icon.svg",
 };
 
