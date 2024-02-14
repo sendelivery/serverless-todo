@@ -10,9 +10,9 @@ class ServerlessTodoBackendStage(Stage):
     def endpoint(self):
         return self._endpoint
 
-    @property
-    def api_key(self):
-        return self._api_key
+    # @property
+    # def api_key(self):
+    #     return self._api_key
 
     def __init__(
         self,
@@ -40,4 +40,4 @@ class ServerlessTodoBackendStage(Stage):
         )
 
         self._endpoint = stateless.endpoint
-        self._api_key = stateless.api_key
+        # self._api_key = stateless.api_key

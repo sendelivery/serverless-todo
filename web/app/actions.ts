@@ -1,28 +1,24 @@
 "use server";
 
-import {
-  ENTRIES_CACHE_TAG,
-  todoApiEndpoint,
-  todoApiKey,
-} from "@/lib/serverConsts";
+import { ENTRIES_CACHE_TAG, todoApiEndpoint } from "@/lib/serverConsts";
 import { type TodoEntry, type TodoEntryInput } from "@/lib/types";
 import { revalidateTag } from "next/cache";
 
 function validateEndpointIsDefined() {
-  if (!todoApiEndpoint || !todoApiKey) {
+  if (!todoApiEndpoint) {
     throw new Error(
-      "Unable to connect to Todo services, please try again later."
+      "Todo API endpoint is not defined, please check environment variables."
     );
   }
 
-  return [todoApiEndpoint, todoApiKey];
+  return todoApiEndpoint;
 }
 
 export async function serverPostEntry(formData: FormData) {
   let input = formData.get("description") as string;
   input = input.trim();
 
-  const [endpoint, key] = validateEndpointIsDefined();
+  const endpoint = validateEndpointIsDefined();
 
   if (!input) {
     console.error({
@@ -40,7 +36,7 @@ export async function serverPostEntry(formData: FormData) {
 
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "x-api-key": key, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     cache: "no-store", // Not strictly needed as form submission results in hard refresh
     body: JSON.stringify(todoEntryInput),
   });
@@ -66,13 +62,13 @@ export async function serverPostEntry(formData: FormData) {
 }
 
 export async function serverPutEntry(id: string, completed: boolean) {
-  const [endpoint, key] = validateEndpointIsDefined();
+  const endpoint = validateEndpointIsDefined();
 
   const proposedUpdate = JSON.stringify({ Id: id, Completed: completed });
 
   const response = await fetch(endpoint, {
     method: "PUT",
-    headers: { "x-api-key": key, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     cache: "no-store",
     body: proposedUpdate,
   });
@@ -90,13 +86,13 @@ export async function serverPutEntry(id: string, completed: boolean) {
 }
 
 export async function serverDeleteEntry(id: string) {
-  const [endpoint, key] = validateEndpointIsDefined();
+  const endpoint = validateEndpointIsDefined();
 
   // Deletes are fine to be cached, unless something's gone wrong in the UI the
   // user shouldn't be able to resubmit the same delete request.
   const response = await fetch(endpoint, {
     method: "DELETE",
-    headers: { "x-api-key": key, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ Id: id }),
   });
 

@@ -65,7 +65,7 @@ class ServerlessTodoPipelineStack(Stack):
                 "TempWebStage",
                 prefix="Todo",
                 todo_endpoint=backend.endpoint.import_value,
-                todo_endpoint_key=backend.api_key.import_value,
+                # todo_endpoint_key=backend.api_key.import_value,
                 # vpc=networking.vpc,
                 # container_environment=container_environment,
                 **kwargs,

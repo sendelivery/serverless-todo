@@ -24,12 +24,12 @@ class StatelessStack(Stack):
         """
         return self._endpoint
 
-    @property
-    def api_key(self):
-        """
-        The API Gateway API key of our backend application.
-        """
-        return self._api_key
+    # @property
+    # def api_key(self):
+    #     """
+    #     The API Gateway API key of our backend application.
+    #     """
+    #     return self._api_key
 
     def __init__(
         self,
@@ -109,7 +109,6 @@ class StatelessStack(Stack):
         entries_get_method = api.resource.add_method(
             "GET",
             authorization_type=None,
-            api_key_required=True,
             integration=apigw.AwsIntegration(
                 service="lambda",
                 region=Aws.REGION,
@@ -122,7 +121,6 @@ class StatelessStack(Stack):
         entries_post_method = api.resource.add_method(
             "POST",
             authorization_type=None,
-            api_key_required=True,
             integration=apigw.AwsIntegration(
                 service="lambda",
                 region=Aws.REGION,
@@ -135,7 +133,6 @@ class StatelessStack(Stack):
         entries_put_method = api.resource.add_method(
             "PUT",
             authorization_type=None,
-            api_key_required=True,
             integration=apigw.AwsIntegration(
                 service="lambda",
                 region=Aws.REGION,
@@ -148,7 +145,6 @@ class StatelessStack(Stack):
         entries_delete_method = api.resource.add_method(
             "DELETE",
             authorization_type=None,
-            api_key_required=True,
             integration=apigw.AwsIntegration(
                 service="lambda",
                 region=Aws.REGION,
@@ -203,12 +199,12 @@ class StatelessStack(Stack):
             export_name=f"{prefix}ApiEndpoint",
             value=api.rest_api.url,
         )
-        self._api_key = CfnOutput(
-            self,
-            f"{prefix}ApiKey",
-            export_name=f"{prefix}ApiKey",
-            value=api.api_key_value,
-        )
+        # self._api_key = CfnOutput(
+        #     self,
+        #     f"{prefix}ApiKey",
+        #     export_name=f"{prefix}ApiKey",
+        #     value=api.api_key_value,
+        # )
 
         # self._endpoint = api.rest_api.url
         # ssm.StringParameter(

@@ -20,7 +20,7 @@ class WebStack(Stack):
         # vpc: ec2.Vpc,
         # container_environment: Mapping[str, str],
         todo_endpoint: str,
-        todo_endpoint_key: str,
+        # todo_endpoint_key: str,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -76,7 +76,7 @@ class WebStack(Stack):
             image=ecs.ContainerImage.from_registry(base_image),
             environment={
                 "TODO_API_ENDPOINT": todo_endpoint,
-                "TODO_API_KEY": todo_endpoint_key,
+                # "TODO_API_KEY": todo_endpoint_key,
             },
             memory_limit_mib=256,
             cpu=256,
