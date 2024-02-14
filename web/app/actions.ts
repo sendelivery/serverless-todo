@@ -8,9 +8,21 @@ import {
 import { type TodoEntry, type TodoEntryInput } from "@/lib/types";
 import { revalidateTag } from "next/cache";
 
+function validateEndpointIsDefined() {
+  if (!todoApiEndpoint || !todoApiKey) {
+    throw new Error(
+      "Unable to connect to Todo services, please try again later."
+    );
+  }
+
+  return [todoApiEndpoint, todoApiKey];
+}
+
 export async function serverPostEntry(formData: FormData) {
   let input = formData.get("description") as string;
   input = input.trim();
+
+  const [endpoint, key] = validateEndpointIsDefined();
 
   if (!input) {
     throw new Error("Invalid input error");
@@ -22,9 +34,9 @@ export async function serverPostEntry(formData: FormData) {
     Completed: false,
   };
 
-  const response = await fetch(todoApiEndpoint, {
+  const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "x-api-key": todoApiKey, "Content-Type": "application/json" },
+    headers: { "x-api-key": key, "Content-Type": "application/json" },
     cache: "no-store", // Not strictly needed as form submission results in hard refresh
     body: JSON.stringify(todoEntryInput),
   });
@@ -45,9 +57,11 @@ export async function serverPostEntry(formData: FormData) {
 }
 
 export async function serverPutEntry(id: string, completed: boolean) {
-  const response = await fetch(todoApiEndpoint, {
+  const [endpoint, key] = validateEndpointIsDefined();
+
+  const response = await fetch(endpoint, {
     method: "PUT",
-    headers: { "x-api-key": todoApiKey, "Content-Type": "application/json" },
+    headers: { "x-api-key": key, "Content-Type": "application/json" },
     cache: "no-store",
     body: JSON.stringify({ Id: id, Completed: completed }),
   });
@@ -60,11 +74,13 @@ export async function serverPutEntry(id: string, completed: boolean) {
 }
 
 export async function serverDeleteEntry(id: string) {
+  const [endpoint, key] = validateEndpointIsDefined();
+
   // Deletes are fine to be cached, unless something's gone wrong in the UI the
   // user shouldn't be able to resubmit the same delete request.
-  const response = await fetch(todoApiEndpoint, {
+  const response = await fetch(endpoint, {
     method: "DELETE",
-    headers: { "x-api-key": todoApiKey, "Content-Type": "application/json" },
+    headers: { "x-api-key": key, "Content-Type": "application/json" },
     body: JSON.stringify({ Id: id }),
   });
 
