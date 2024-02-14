@@ -25,6 +25,10 @@ export async function serverPostEntry(formData: FormData) {
   const [endpoint, key] = validateEndpointIsDefined();
 
   if (!input) {
+    console.error({
+      message: "Invalid input when creating new todo entry.",
+      input: JSON.stringify(input),
+    });
     throw new Error("Invalid input error");
   }
 
@@ -45,7 +49,7 @@ export async function serverPostEntry(formData: FormData) {
     console.error({
       message: "Received a non 2XX response when creating new todo entry.",
       input: JSON.stringify(todoEntryInput),
-      response,
+      response: JSON.stringify(response),
     });
     throw new Error("Unable to create new todo entry. Please try again later.");
   }
@@ -76,8 +80,8 @@ export async function serverPutEntry(id: string, completed: boolean) {
   if (!response.ok) {
     console.error({
       message: "Received a non 2XX response when updating a todo entry.",
-      proposedUpdate,
-      response,
+      proposedUpdate: JSON.stringify(proposedUpdate),
+      response: JSON.stringify(response),
     });
     throw new Error("Unbale to update todo entry. Please try again later.");
   }
@@ -97,10 +101,11 @@ export async function serverDeleteEntry(id: string) {
   });
 
   if (!response.ok) {
-    console.error(
-      "Received a non 2XX response when deleting a todo entry.",
-      response
-    );
+    console.error({
+      message: "Received a non 2XX response when deleting a todo entry.",
+      id,
+      response: JSON.stringify(response),
+    });
     throw new Error("Unable to delete todo entry. Please try again later.");
   }
 

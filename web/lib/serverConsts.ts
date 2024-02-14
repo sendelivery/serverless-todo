@@ -8,7 +8,9 @@ function tryToGetApiDetailsFromEnv() {
     `Retrieved API details from environment variables, TODO_API_ENDPOINT: ${endpoint}, TODO_API_KEY: ${key}`
   );
 
-  return [endpoint, key];
+  // Our web app only interacts with the /entries resource, so we'll just hardcode
+  // that into our endpoint here.
+  return [`${endpoint}entries`, key];
 }
 
 export const [todoApiEndpoint, todoApiKey] = tryToGetApiDetailsFromEnv();
