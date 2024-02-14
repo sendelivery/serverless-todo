@@ -4,6 +4,7 @@ from aws_cdk import (
     aws_ec2 as ec2,
     aws_ecs as ecs,
     aws_iam as iam,
+    aws_ssm as ssm,
     aws_ecs_patterns as ecs_patterns,
 )
 from constructs import Construct
@@ -55,12 +56,23 @@ class WebStack(Stack):
         )
         task_definition.add_to_execution_role_policy(execution_policy)
 
+        # Grab endpoint and key from SSM
+        TODO_API_ENDPOINT = ssm.StringParameter.value_for_string_parameter(
+            self, parameter_name=f"{prefix}ApiEndpoint"
+        )
+        TODO_API_KEY = ssm.StringParameter.value_for_string_parameter(
+            self, parameter_name=f"{prefix}ApiKey"
+        )
+
         # Let's grab the latest build of our web app and use that in our task definition.
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
         container = task_definition.add_container(
             "nextjs-fargate",
             image=ecs.ContainerImage.from_registry(base_image),
-            # environment=container_environment,
+            environment={
+                "TODO_API_ENDPOINT": TODO_API_ENDPOINT,
+                "TODO_API_KEY": TODO_API_KEY,
+            },
             memory_limit_mib=256,
             cpu=256,
             # https://stackoverflow.com/questions/55702196/essential-container-in-task-exited
