@@ -42,6 +42,11 @@ export async function serverPostEntry(formData: FormData) {
   });
 
   if (!response.ok) {
+    console.error({
+      message: "Received a non 2XX response when creating new todo entry.",
+      input: JSON.stringify(todoEntryInput),
+      response,
+    });
     throw new Error("Unable to create new todo entry. Please try again later.");
   }
 
@@ -59,14 +64,21 @@ export async function serverPostEntry(formData: FormData) {
 export async function serverPutEntry(id: string, completed: boolean) {
   const [endpoint, key] = validateEndpointIsDefined();
 
+  const proposedUpdate = JSON.stringify({ Id: id, Completed: completed });
+
   const response = await fetch(endpoint, {
     method: "PUT",
     headers: { "x-api-key": key, "Content-Type": "application/json" },
     cache: "no-store",
-    body: JSON.stringify({ Id: id, Completed: completed }),
+    body: proposedUpdate,
   });
 
   if (!response.ok) {
+    console.error({
+      message: "Received a non 2XX response when updating a todo entry.",
+      proposedUpdate,
+      response,
+    });
     throw new Error("Unbale to update todo entry. Please try again later.");
   }
 
@@ -85,6 +97,10 @@ export async function serverDeleteEntry(id: string) {
   });
 
   if (!response.ok) {
+    console.error(
+      "Received a non 2XX response when deleting a todo entry.",
+      response
+    );
     throw new Error("Unable to delete todo entry. Please try again later.");
   }
 

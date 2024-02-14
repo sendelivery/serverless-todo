@@ -1,12 +1,12 @@
 from constructs import Construct
 from aws_cdk.aws_dynamodb import Table
 from aws_cdk import (
-    # CfnOutput,
+    CfnOutput,
     Stack,
     aws_lambda as _lambda,
     aws_apigateway as apigw,
     aws_iam as iam,
-    aws_ssm as ssm,
+    # aws_ssm as ssm,
     Aws,
 )
 from backend.stateless.lib.restapi_with_key import RestApiWithApiKey
@@ -197,30 +197,30 @@ class StatelessStack(Stack):
 
         # # Lets expose our API Gateway endpoint and key as a CFN outputs so our web stage can access
         # # them later.
-        # self._endpoint = CfnOutput(
-        #     self,
-        #     f"{prefix}Endpoint",
-        #     export_name=f"{prefix}ApiEndpoint",
-        #     value=api.rest_api.url,
-        # )
-        # self._api_key = CfnOutput(
-        #     self,
-        #     f"{prefix}ApiKey",
-        #     export_name=f"{prefix}ApiKey",
-        #     value=api.api_key_value,
-        # )
-
-        self._endpoint = api.rest_api.url
-        ssm.StringParameter(
+        self._endpoint = CfnOutput(
             self,
             f"{prefix}ApiEndpoint",
-            parameter_name=f"{prefix}ApiEndpoint",
-            string_value=api.rest_api.url,
+            export_name=f"{prefix}ApiEndpoint",
+            value=api.rest_api.url,
         )
-        self._api_key = api.api_key_value
-        ssm.StringParameter(
+        self._api_key = CfnOutput(
             self,
             f"{prefix}ApiKey",
-            parameter_name=f"{prefix}ApiKey",
-            string_value=api.api_key_value,
+            export_name=f"{prefix}ApiKey",
+            value=api.api_key_value,
         )
+
+        # self._endpoint = api.rest_api.url
+        # ssm.StringParameter(
+        #     self,
+        #     f"{prefix}ApiEndpoint",
+        #     parameter_name=f"{prefix}ApiEndpoint",
+        #     string_value=api.rest_api.url,
+        # )
+        # self._api_key = api.api_key_value
+        # ssm.StringParameter(
+        #     self,
+        #     f"{prefix}ApiKey",
+        #     parameter_name=f"{prefix}ApiKey",
+        #     string_value=api.api_key_value,
+        # )

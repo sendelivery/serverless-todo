@@ -47,8 +47,13 @@ export default function TodoSection(props: TodoSectionProps) {
           message: "Successfully created new todo entry.",
         });
       })
-      .catch((error) => {
-        enqueueToast({ level: "error", message: `${error}`, lifespan: "inf" });
+      .catch(() => {
+        enqueueToast({
+          level: "error",
+          message:
+            "Sorry, we had trouble creating your Todo entry, please try again later.",
+          lifespan: "inf",
+        });
       });
   }
 
@@ -67,8 +72,13 @@ export default function TodoSection(props: TodoSectionProps) {
           message: "Successfully updated todo entry.",
         });
       })
-      .catch((error) => {
-        enqueueToast({ level: "error", message: `${error}`, lifespan: "inf" });
+      .catch(() => {
+        enqueueToast({
+          level: "error",
+          message:
+            "Sorry, we had trouble updating your Todo entry, please try again later.",
+          lifespan: "inf",
+        });
       });
   }
 
@@ -83,8 +93,13 @@ export default function TodoSection(props: TodoSectionProps) {
           message: "Successfully deleted todo entry.",
         });
       })
-      .catch((error) => {
-        enqueueToast({ level: "error", message: `${error}`, lifespan: "inf" });
+      .catch(() => {
+        enqueueToast({
+          level: "error",
+          message:
+            "Sorry, we had trouble deleting your Todo entry, please try again later.",
+          lifespan: "inf",
+        });
       });
   }
 

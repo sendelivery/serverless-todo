@@ -1,6 +1,7 @@
 from typing import Mapping
 from aws_cdk import (
     Stack,
+    CfnOutput,
     aws_ec2 as ec2,
     aws_ecs as ecs,
     aws_iam as iam,
@@ -18,6 +19,8 @@ class WebStack(Stack):
         prefix: str,
         # vpc: ec2.Vpc,
         # container_environment: Mapping[str, str],
+        todo_endpoint: str,
+        todo_endpoint_key: str,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -57,12 +60,14 @@ class WebStack(Stack):
         task_definition.add_to_execution_role_policy(execution_policy)
 
         # Grab endpoint and key from SSM
-        TODO_API_ENDPOINT = ssm.StringParameter.value_for_string_parameter(
-            self, parameter_name=f"{prefix}ApiEndpoint"
-        )
-        TODO_API_KEY = ssm.StringParameter.value_for_string_parameter(
-            self, parameter_name=f"{prefix}ApiKey"
-        )
+        # TODO_API_ENDPOINT = ssm.StringParameter.value_for_string_parameter(
+        #     self, parameter_name=f"{prefix}ApiEndpoint"
+        # )
+        # TODO_API_KEY = ssm.StringParameter.value_for_string_parameter(
+        #     self, parameter_name=f"{prefix}ApiKey"
+        # )
+        # TODO_API_ENDPOINT = CfnOutput.import_value(f"{prefix}ApiEndpoint")
+        # TODO_API_KEY = CfnOutput.import_value(f"{prefix}ApiKey")
 
         # Let's grab the latest build of our web app and use that in our task definition.
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
@@ -70,8 +75,8 @@ class WebStack(Stack):
             "nextjs-fargate",
             image=ecs.ContainerImage.from_registry(base_image),
             environment={
-                "TODO_API_ENDPOINT": TODO_API_ENDPOINT,
-                "TODO_API_KEY": TODO_API_KEY,
+                "TODO_API_ENDPOINT": todo_endpoint,
+                "TODO_API_KEY": todo_endpoint_key,
             },
             memory_limit_mib=256,
             cpu=256,

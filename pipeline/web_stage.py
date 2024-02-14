@@ -15,8 +15,10 @@ class ServerlessTodoWebStage(Stage):
         prefix: str,
         # vpc: ec2.Vpc,
         # container_environment: Mapping[str, str],
+        todo_endpoint: str,
+        todo_endpoint_key: str,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
 
-        WebStack(self, f"{prefix}WebStack", prefix)
+        WebStack(self, f"{prefix}WebStack", prefix, todo_endpoint, todo_endpoint_key)
