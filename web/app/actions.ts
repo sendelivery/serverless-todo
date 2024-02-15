@@ -50,13 +50,17 @@ export async function serverPostEntry(formData: FormData) {
     throw new Error("Unable to create new todo entry. Please try again later.");
   }
 
-  revalidateTag(ENTRIES_CACHE_TAG);
-
   const id = await response.text();
   const todoEntry: TodoEntry = {
     ...todoEntryInput,
     Id: id,
   };
+
+  console.info({
+    message: "Successfully created todo entry! Revalidating cache...",
+    todoEntry: JSON.stringify(todoEntry),
+  });
+  revalidateTag(ENTRIES_CACHE_TAG);
 
   return todoEntry;
 }
@@ -76,12 +80,16 @@ export async function serverPutEntry(id: string, completed: boolean) {
   if (!response.ok) {
     console.error({
       message: "Received a non 2XX response when updating a todo entry.",
-      proposedUpdate: JSON.stringify(proposedUpdate),
+      proposedUpdate,
       response: JSON.stringify(response),
     });
-    throw new Error("Unbale to update todo entry. Please try again later.");
+    throw new Error("Unable to update todo entry. Please try again later.");
   }
 
+  console.info({
+    message: "Successfully updated todo entry! Revalidating cache...",
+    udpate: proposedUpdate,
+  });
   revalidateTag(ENTRIES_CACHE_TAG);
 }
 
@@ -105,5 +113,9 @@ export async function serverDeleteEntry(id: string) {
     throw new Error("Unable to delete todo entry. Please try again later.");
   }
 
+  console.info({
+    message: "Successfully deleted todo entry! Revalidating cache...",
+    itemDeleted: id,
+  });
   revalidateTag(ENTRIES_CACHE_TAG);
 }

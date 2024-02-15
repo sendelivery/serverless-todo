@@ -8,7 +8,10 @@ export default async function Page() {
 
   if (todoApiEndpoint) {
     const response = await fetch(todoApiEndpoint, {
-      next: { tags: [ENTRIES_CACHE_TAG] },
+      next: {
+        // tags: [ENTRIES_CACHE_TAG],
+        revalidate: 0,
+      },
     });
 
     entries = await response.json();
