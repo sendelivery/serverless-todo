@@ -1,4 +1,8 @@
 from typing import Any, Dict, Sequence
+from aws_cdk.aws_codepipeline import (
+    Artifact as _Artifact_0cb05964,
+    IStage as _IStage_415fc571,
+)
 from constructs import Construct
 from aws_cdk import (
     Environment,
@@ -11,7 +15,9 @@ from aws_cdk import (
     pipelines as pipelines,
     aws_codedeploy as codedeploy,
     aws_codebuild as codebuild,
+    aws_ecs as ecs,
 )
+import jsii
 from .networking_stage import ServerlessTodoNetworkingStage
 
 from .backend_stage import ServerlessTodoBackendStage
@@ -68,6 +74,37 @@ class ServerlessTodoPipelineStack(Stack):
         #     "TODO_API_KEY": backend.api_key,
         # }
 
+        configure_codedeploy_step = pipelines.ShellStep(
+            "ConfigureBlueGreenDeployment",
+            input=pipeline.cloud_assembly_file_set,
+            primary_output_directory="codedeploy",
+            commands=[
+                "chmod a+x ./codedeploy/codedeploy_configuration.sh",
+                f"./codedeploy/codedeploy_configuration.sh {460848972690} {'eu-west-2'} {'Todo'} {'Prod'} {pipeline.node.id} {'TODO-Service'}",
+            ],
+        )
+
+        cd_application = codedeploy.EcsApplication.from_ecs_application_arn(
+            self,
+            id="cd_application_from_arn",
+            ecs_application_arn="arn:aws:codedeploy:eu-west-2:460848972690:application:BlueGreenApplication",
+        )
+        cd_deployment_group = codedeploy.EcsDeploymentGroup.from_ecs_deployment_group_attributes(
+            self,
+            "ECSDeploymentGroupId",
+            application=cd_application,
+            deployment_group_name="BlueGreenDeploymentGroup",
+            deployment_config=codedeploy.EcsDeploymentConfig.CANARY_10_PERCENT_5_MINUTES,
+        )
+
+        deploy_step = CodeDeployStep(
+            "CodeDeployStep",
+            file_set=configure_codedeploy_step.primary_output,
+            deployment_group=cd_deployment_group,
+            stage_name="CDStepStageName",
+        )
+        deploy_step.add_step_dependency(configure_codedeploy_step)
+
         pipeline.add_stage(
             ServerlessTodoWebStage(
                 self,
@@ -111,13 +148,68 @@ class ServerlessTodoPipelineStack(Stack):
                     # )
                 )
             ],
+            post=[configure_codedeploy_step, deploy_step],
         )
 
-        # pipelines.ShellStep(
-        #     'BlueGreenDeployment',
-        #     input='./cdk.out/',
-        #     primary_output_directory='codedeploy',
-        #     commands=[
-        #         # call a code deploy script
-        #     ]
-        #     )
+
+@jsii.implements(pipelines.ICodePipelineActionFactory)
+class CodeDeployStep(pipelines.Step):
+    def __init__(
+        self,
+        id: str,
+        file_set: pipelines.FileSet,
+        deployment_group: codedeploy.IEcsDeploymentGroup,
+        stage_name: str,
+    ) -> None:
+        super().__init__(id)
+
+        self._file_set = file_set
+        self._deployment_group = deployment_group
+
+        # codepipeline_actions.CodeDeployEcsDeployAction(
+        #     action_name="Deploy",
+        #     app_spec_template_input=
+        # )
+
+    def produce_action(
+        self,
+        stage: codepipeline.IStage,
+        *,
+        action_name: str,
+        run_order: int,
+        artifacts: pipelines.ArtifactMap,
+    ) -> pipelines.CodePipelineActionFactoryResult:
+        artifact = artifacts.to_code_pipeline(self._file_set)
+
+        stage.add_action(
+            action=codepipeline_actions.CodeDeployEcsDeployAction(
+                action_name="DeployECS",
+                app_spec_template_input=artifact,
+                task_definition_template_input=artifact,
+                run_order=run_order,
+                container_image_inputs=[
+                    codepipeline_actions.CodeDeployEcsContainerImageInput(
+                        input=artifact,
+                        task_definition_placeholder="Image1_Name",
+                    )
+                ],
+                deployment_group=self._deployment_group,
+                variables_namespace="deployment-prod-variables",
+            )
+        )
+
+        return pipelines.CodePipelineActionFactoryResult(run_orders_consumed=1)
+
+        # return super().produce_action(
+        #     stage,
+        #     action_name=action_name,
+        #     artifacts=artifacts,
+        #     pipeline=pipeline,
+        #     run_order=run_order,
+        #     scope=scope,
+        #     stack_outputs_map=stack_outputs_map,
+        #     before_self_mutation=before_self_mutation,
+        #     code_build_defaults=code_build_defaults,
+        #     fallback_artifact=fallback_artifact,
+        #     variables_namespace=variables_namespace,
+        # )

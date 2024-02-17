@@ -130,7 +130,9 @@ class WebStack(Stack):
             ],
         )
 
-        app = codedeploy.EcsApplication(self, "BlueGreenApplicationId")
+        app = codedeploy.EcsApplication(
+            self, "BlueGreenApplicationId", application_name="BlueGreenApplication"
+        )
 
         green_target_group = elb.ApplicationTargetGroup(
             self,

@@ -7,7 +7,7 @@ import utilStyles from "@/styles/utilities.css";
 const inter = Inter({ subsets: ["latin"], weight: "variable" });
 
 export const metadata: Metadata = {
-  title: "Serverless Todo",
+  title: "Green Serverless Todo",
   description:
     "Created for systems design and AWS practice and then deviated massively, becoming a fully fledged full-stack app.",
   icons: "/icon.svg",
