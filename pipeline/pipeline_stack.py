@@ -79,8 +79,8 @@ class ServerlessTodoPipelineStack(Stack):
             input=pipeline.cloud_assembly_file_set,
             primary_output_directory="codedeploy",
             commands=[
-                "chmod a+x ./codedeploy/codedeploy_configuration.sh",
-                f"./codedeploy/codedeploy_configuration.sh {460848972690} {'eu-west-2'} {'Todo'} {'Prod'} {pipeline.node.id} {'TODO-Service'}",
+                "chmod a+x ./pipeline/codedeploy/codedeploy_configuration.sh",
+                f"./pipeline/codedeploy/codedeploy_configuration.sh {460848972690} {'eu-west-2'} {'Todo'} {'Prod'} {pipeline.node.id} {'TODO-Service'}",
             ],
         )
 
