@@ -1,8 +1,16 @@
+from typing import Any, Dict, Sequence
 from constructs import Construct
 from aws_cdk import (
+    Environment,
+    IPolicyValidationPluginBeta1,
+    PermissionsBoundary,
     Stack,
     Stage,
+    aws_codepipeline as codepipeline,
+    aws_codepipeline_actions as codepipeline_actions,
     pipelines as pipelines,
+    aws_codedeploy as codedeploy,
+    aws_codebuild as codebuild,
 )
 from .networking_stage import ServerlessTodoNetworkingStage
 
@@ -38,6 +46,7 @@ class ServerlessTodoPipelineStack(Stack):
                 ],
             ),
             publish_assets_in_parallel=False,
+            # use_change_sets=
         )
 
         # networking = ServerlessTodoNetworkingStage(
@@ -103,3 +112,12 @@ class ServerlessTodoPipelineStack(Stack):
                 )
             ],
         )
+
+        # pipelines.ShellStep(
+        #     'BlueGreenDeployment',
+        #     input='./cdk.out/',
+        #     primary_output_directory='codedeploy',
+        #     commands=[
+        #         # call a code deploy script
+        #     ]
+        #     )

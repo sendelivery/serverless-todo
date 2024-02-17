@@ -1,5 +1,6 @@
 from typing import Mapping
 from aws_cdk import (
+    Duration,
     Stack,
     CfnOutput,
     aws_ec2 as ec2,
@@ -7,6 +8,8 @@ from aws_cdk import (
     aws_iam as iam,
     aws_ssm as ssm,
     aws_ecs_patterns as ecs_patterns,
+    aws_codedeploy as codedeploy,
+    aws_elasticloadbalancingv2 as elb,
 )
 from constructs import Construct
 
@@ -98,4 +101,70 @@ class WebStack(Stack):
             desired_count=1,
             listener_port=80,
             assign_public_ip=True,
+            deployment_controller=ecs.DeploymentController(
+                type=ecs.DeploymentControllerType.CODE_DEPLOY
+            ),
+        )
+
+        codedeploy_execution_role = iam.Role(
+            self,
+            "CodeDeployExecutionRoleId",
+            assumed_by=iam.ServicePrincipal("codedeploy.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "AWSCodeBuildDeveloperAccess"
+                ),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "AmazonEC2ContainerRegistryFullAccess"
+                ),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonECS_FullAccess"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "CloudWatchLogsFullAccess"
+                ),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "AWSCodeDeployRoleForECS"
+                ),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaBasicExecutionRole"
+                ),
+            ],
+        )
+
+        app = codedeploy.EcsApplication(self, "BlueGreenApplicationId")
+
+        green_target_group = elb.ApplicationTargetGroup(
+            self,
+            "GreenTgId",
+            protocol=elb.ApplicationProtocol.HTTP,
+            target_group_name="GreenTgName",
+            target_type=elb.TargetType.IP,
+            vpc=vpc,
+        )
+
+        green_listener = fargate_service.load_balancer.add_listener(
+            "GreenListener",
+            port=8080,
+            default_target_groups=[green_target_group],
+            protocol=elb.ApplicationProtocol.HTTP,
+        )
+
+        green_listener.add_action(
+            "GreenListenerActionId",
+            action=elb.ListenerAction.forward(target_groups=[green_target_group]),
+        )
+
+        codedeploy.EcsDeploymentGroup(
+            self,
+            deployment_group_name="BlueGreenDeploymentGroup",
+            id="BlueGreenDeploymentGroupId",
+            application=app,
+            service=fargate_service.service,
+            role=codedeploy_execution_role,
+            blue_green_deployment_config=codedeploy.EcsBlueGreenDeploymentConfig(
+                blue_target_group=fargate_service.target_group,
+                green_target_group=green_target_group,
+                listener=fargate_service.listener,
+                test_listener=green_listener,
+                termination_wait_time=Duration.minutes(15),
+            ),
         )
