@@ -1,28 +1,15 @@
-from typing import Any, Dict, Sequence
-from aws_cdk.aws_codepipeline import (
-    Artifact as _Artifact_0cb05964,
-    IStage as _IStage_415fc571,
-)
 from constructs import Construct
 from aws_cdk import (
-    Environment,
-    IPolicyValidationPluginBeta1,
-    PermissionsBoundary,
     Stack,
-    Stage,
     aws_codepipeline as codepipeline,
-    aws_codepipeline_actions as codepipeline_actions,
+    aws_codepipeline_actions as cpactions,
     pipelines as pipelines,
     aws_codedeploy as codedeploy,
-    aws_codebuild as codebuild,
-    aws_ecs as ecs,
 )
 import jsii
-from .networking_stage import ServerlessTodoNetworkingStage
 
 from .backend_stage import ServerlessTodoBackendStage
 from .lib.codebuild_execution_role import CodeBuildExecutionRole
-
 from .web_stage import ServerlessTodoWebStage
 
 
@@ -30,14 +17,11 @@ class ServerlessTodoPipelineStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        ############################ PIPELINE START ############################
         pipeline = pipelines.CodePipeline(
             self,
             "TodoPipeline",
             pipeline_name="TodoPipeline",
-            # code_build_defaults=pipelines.CodeBuildOptions(
-            # TODO: should I set the build environment here?
-            #     build_environment=
-            # )
             synth=pipelines.ShellStep(
                 "Synth",
                 input=pipelines.CodePipelineSource.git_hub(
@@ -48,31 +32,26 @@ class ServerlessTodoPipelineStack(Stack):
                     "npm install -g aws-cdk",
                     "pip install -r requirements.txt",
                     "cdk synth",
+                    # We need to include the codedeploy stuff in our pipeline's cloud assembly file set
+                    "cp -r ./scripts/codedeploy cdk.out",
                     # TODO: "pytest tests"
                 ],
             ),
             publish_assets_in_parallel=False,
-            # use_change_sets=
         )
+        ############################ PIPELINE END ############################
 
-        # networking = ServerlessTodoNetworkingStage(
-        #     self, "TodoNetworkingStage", prefix="Todo", **kwargs
-        # )
-        # pipeline.add_stage(networking)
-
+        ############################ APPLICATION / STORAGE START ############################
         backend = ServerlessTodoBackendStage(
             self, "TodoBackendStage", prefix="Todo", **kwargs
         )
         pipeline.add_stage(backend)
+        ############################ APPLICATION / STORAGE END ############################
 
+        ############################ WEB START ############################
         container_repository = (
             "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app"
         )
-
-        # container_environment = {
-        #     "TODO_API_ENDPOINT": backend.endpoint,
-        #     "TODO_API_KEY": backend.api_key,
-        # }
 
         configure_codedeploy_step = pipelines.ShellStep(
             "ConfigureBlueGreenDeployment",
@@ -98,10 +77,8 @@ class ServerlessTodoPipelineStack(Stack):
         )
 
         deploy_step = CodeDeployStep(
-            "CodeDeployStep",
-            file_set=configure_codedeploy_step.primary_output,
+            input=configure_codedeploy_step.primary_output,
             deployment_group=cd_deployment_group,
-            stage_name="CDStepStageName",
         )
         deploy_step.add_step_dependency(configure_codedeploy_step)
 
@@ -111,9 +88,6 @@ class ServerlessTodoPipelineStack(Stack):
                 "TempWebStage",
                 prefix="Todo",
                 todo_endpoint=backend.endpoint.import_value,
-                # todo_endpoint_key=backend.api_key.import_value,
-                # vpc=networking.vpc,
-                # container_environment=container_environment,
                 **kwargs,
             ),
             pre=[
@@ -123,93 +97,55 @@ class ServerlessTodoPipelineStack(Stack):
                         self, "TodoCodeBuildExecutionRole"
                     ).role,
                     commands=[
-                        "echo Setting environments variables...",
-                        # 'TODO_API_ENDPOINT="$(aws ssm get-parameter --name TodoApiEndpoint --query Parameter.Value --output text)entries"',
-                        # "export TODO_API_ENDPOINT",
-                        # 'echo "$TODO_API_ENDPOINT"',
-                        # 'TODO_API_KEY="$(aws ssm get-parameter --name TodoApiKey --query Parameter.Value --output text)"',
-                        # "export TODO_API_KEY",
-                        # 'echo "$TODO_API_KEY"',
                         "cd web/",
-                        # 'echo TODO_API_ENDPOINT="$TODO_API_ENDPOINT" >> .env.local',
-                        # 'echo TODO_API_KEY="$TODO_API_KEY" >> .env.local',
                         "echo Logging in to Amazon ECR...",
                         f"aws ecr get-login-password | docker login --username AWS --password-stdin {container_repository}",
                         "docker build -t todo-web-app .",
                         f"docker tag todo-web-app:latest {container_repository}:latest",
                         f"docker push {container_repository}:latest",
                     ],
-                    # build_environment=codebuild.BuildEnvironment(
-                    #     build_image=codebuild.LinuxBuildImage.STANDARD_7_0,
-                    #     # privileged must be set to true only if this build project will be used to
-                    #     # build Docker images, and the specified build environment image is not one
-                    #     # provided by AWS CodeBuild with Docker support
-                    #     privileged=True
-                    # )
                 )
             ],
             post=[configure_codedeploy_step, deploy_step],
         )
+        ############################ WEB END ############################
 
 
 @jsii.implements(pipelines.ICodePipelineActionFactory)
 class CodeDeployStep(pipelines.Step):
-    def __init__(
-        self,
-        id: str,
-        file_set: pipelines.FileSet,
-        deployment_group: codedeploy.IEcsDeploymentGroup,
-        stage_name: str,
-    ) -> None:
-        super().__init__(id)
+    def __init__(self, input: pipelines.FileSet, deployment_group):
+        super().__init__("MyCodeDeployStep")
 
-        self._file_set = file_set
+        self._input = input
         self._deployment_group = deployment_group
-
-        # codepipeline_actions.CodeDeployEcsDeployAction(
-        #     action_name="Deploy",
-        #     app_spec_template_input=
-        # )
 
     def produce_action(
         self,
         stage: codepipeline.IStage,
         *,
-        action_name: str,
-        run_order: int,
+        scope,
+        action_name,
+        run_order,
         artifacts: pipelines.ArtifactMap,
-    ) -> pipelines.CodePipelineActionFactoryResult:
-        artifact = artifacts.to_code_pipeline(self._file_set)
+        pipeline,
+    ):
+        artifact = artifacts.to_code_pipeline(self._input)
 
         stage.add_action(
-            action=codepipeline_actions.CodeDeployEcsDeployAction(
-                action_name="DeployECS",
+            cpactions.CodeDeployEcsDeployAction(
+                action_name="CustomCodeDeployAction",
+                deployment_group=self._deployment_group,
                 app_spec_template_input=artifact,
                 task_definition_template_input=artifact,
                 run_order=run_order,
                 container_image_inputs=[
-                    codepipeline_actions.CodeDeployEcsContainerImageInput(
+                    cpactions.CodeDeployEcsContainerImageInput(
                         input=artifact,
-                        task_definition_placeholder="Image1_Name",
+                        task_definition_placeholder="IMAGE1_NAME",
                     )
                 ],
-                deployment_group=self._deployment_group,
-                variables_namespace="deployment-prod-variables",
+                variables_namespace="variable-namespace-",
             )
         )
 
         return pipelines.CodePipelineActionFactoryResult(run_orders_consumed=1)
-
-        # return super().produce_action(
-        #     stage,
-        #     action_name=action_name,
-        #     artifacts=artifacts,
-        #     pipeline=pipeline,
-        #     run_order=run_order,
-        #     scope=scope,
-        #     stack_outputs_map=stack_outputs_map,
-        #     before_self_mutation=before_self_mutation,
-        #     code_build_defaults=code_build_defaults,
-        #     fallback_artifact=fallback_artifact,
-        #     variables_namespace=variables_namespace,
-        # )
