@@ -33,7 +33,8 @@ ls -l codedeploy
 # echo ${repo_name}
 # echo ${tag_name}
 # printf '{"ImageURI":"%s"}' "$Account.dkr.ecr.$Region.amazonaws.com/${repo_name}:${tag_name}" >codedeploy/imageDetail.json
-printf '{"ImageURI":"%s"}' "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest" >codedeploy/imageDetail.json
+# printf '{"ImageURI":"%s"}' "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest" >codedeploy/imageDetail.json
+printf '{"ImageURI":"%s"}' "$Account.dkr.ecr.$Region.amazonaws.com/serverless-todo-web-app:latest" >codedeploy/imageDetail.json
 sed 's#APPLICATION#'$AppName'#g' codedeploy/template-appspec.yaml >codedeploy/appspec.yaml
 # sed 's#APPLICATION#'$AppName'#g' codedeploy/template-taskdef.json | sed 's#TASK_EXEC_ROLE#arn:aws:iam::'$Account':role/'$ServiceName'#g' | sed 's#fargate-task-definition#'$ServiceName'#g' >codedeploy/taskdef.json
 sed 's#APPLICATION#'$AppName'#g' codedeploy/template-taskdef.json | sed 's#TASK_EXEC_ROLE#arn:aws:iam::'$Account':role/FargateTaskRole#g' | sed 's#fargate-task-definition#'$ServiceName'#g' >codedeploy/taskdef.json

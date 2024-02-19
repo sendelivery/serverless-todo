@@ -31,10 +31,10 @@ class ServerlessTodoPipelineStack(Stack):
                 commands=[
                     "npm install -g aws-cdk",
                     "pip install -r requirements.txt",
+                    # TODO: "pytest tests"
                     "cdk synth",
                     # We need to include the codedeploy stuff in our pipeline's cloud assembly file set
                     "cp -r ./scripts/codedeploy cdk.out",
-                    # TODO: "pytest tests"
                 ],
             ),
             publish_assets_in_parallel=False,
@@ -58,8 +58,17 @@ class ServerlessTodoPipelineStack(Stack):
             input=pipeline.cloud_assembly_file_set,
             primary_output_directory="codedeploy",
             commands=[
-                "chmod a+x ./pipeline/codedeploy/codedeploy_configuration.sh",
-                f"./pipeline/codedeploy/codedeploy_configuration.sh {460848972690} {'eu-west-2'} {'Todo'} {'Prod'} {pipeline.node.id} {'TODO-Service'}",
+                "ls",
+                "chmod a+x ./codedeploy/codedeploy_configuration.sh",
+                (
+                    "./codedeploy/codedeploy_configuration.sh "
+                    f"{self.account} "
+                    f"{self.region} "
+                    f"{'Todo'} "
+                    f"{'Prod'} "
+                    f"{pipeline.node.id} "
+                    f"{'TODO-Service'}"
+                ),
             ],
         )
 
