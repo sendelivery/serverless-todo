@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_codepipeline_actions as cpactions,
     pipelines as pipelines,
     aws_codedeploy as codedeploy,
+    aws_iam as iam,
 )
 import jsii
 
@@ -140,21 +141,41 @@ class CodeDeployStep(pipelines.Step):
     ):
         artifact = artifacts.to_code_pipeline(self._input)
 
-        stage.add_action(
-            cpactions.CodeDeployEcsDeployAction(
-                action_name="CustomCodeDeployAction",
-                deployment_group=self._deployment_group,
-                app_spec_template_input=artifact,
-                task_definition_template_input=artifact,
-                run_order=run_order,
-                container_image_inputs=[
-                    cpactions.CodeDeployEcsContainerImageInput(
-                        input=artifact,
-                        task_definition_placeholder="IMAGE1_NAME",
-                    )
-                ],
-                variables_namespace="variable-namespace-",
+        action = cpactions.CodeDeployEcsDeployAction(
+            action_name="CustomCodeDeployAction",
+            deployment_group=self._deployment_group,
+            app_spec_template_input=artifact,
+            task_definition_template_input=artifact,
+            run_order=run_order,
+            container_image_inputs=[
+                cpactions.CodeDeployEcsContainerImageInput(
+                    input=artifact,
+                    task_definition_placeholder="IMAGE1_NAME",
+                )
+            ],
+            variables_namespace="variable-namespace-",
+        )
+        action.action_properties.role.attach_inline_policy(
+            iam.Policy(
+                self,
+                "AllowECSAllAtOncePolicy",
+                policy_name="AllowECSAllAtOncePolicy",
+                document=iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            actions=[
+                                "codedeploy:GetDeploymentConfig",
+                            ],
+                            resources=[
+                                "arn:aws:codedeploy:eu-west-2:460848972690:deploymentconfig:CodeDeployDefault.ECSAllAtOnce"
+                            ],
+                            effect=iam.Effect.ALLOW,
+                        )
+                    ]
+                ),
             )
         )
+
+        stage.add_action(action)
 
         return pipelines.CodePipelineActionFactoryResult(run_orders_consumed=1)
