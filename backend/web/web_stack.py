@@ -36,24 +36,19 @@ class WebStack(Stack):
             f"{prefix}FargateTaskRole",
             role_name=f"{prefix}FargateTaskRole",
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
-            inline_policies={
-                "EcrPermissions": iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW,
-                            resources=["*"],
-                            actions=[
-                                "ecr:GetAuthorizationToken",
-                                "ecr:batchchecklayeravailability",
-                                "ecr:getdownloadurlforlayer",
-                                "ecr:batchgetimage",
-                                "logs:createlogstream",
-                                "logs:putlogevents",
-                            ],
-                        )
-                    ]
-                )
-            },
+        )
+
+        execution_policy = iam.PolicyStatement(
+            effect=iam.Effect.ALLOW,
+            resources=["*"],
+            actions=[
+                "ecr:getauthorizationtoken",
+                "ecr:batchchecklayeravailability",
+                "ecr:getdownloadurlforlayer",
+                "ecr:batchgetimage",
+                "logs:createlogstream",
+                "logs:putlogevents",
+            ],
         )
 
         task_definition = ecs.FargateTaskDefinition(
@@ -63,6 +58,7 @@ class WebStack(Stack):
             cpu=256,
             memory_limit_mib=512,
         )
+        task_definition.add_to_execution_role_policy(execution_policy)
 
         # Let's grab the latest build of our web app and use that in our task definition.
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
