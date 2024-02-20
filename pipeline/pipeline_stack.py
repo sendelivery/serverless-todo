@@ -5,7 +5,6 @@ from aws_cdk import (
     aws_codepipeline_actions as cpactions,
     pipelines as pipelines,
     aws_codedeploy as codedeploy,
-    aws_iam as iam,
 )
 import jsii
 
@@ -69,7 +68,8 @@ class ServerlessTodoPipelineStack(Stack):
                     f"{'Prod'} "
                     f"{pipeline.node.id} "
                     "TodoFargateTaskExecutionRole "
-                    "TodoFargateTaskDefinition"
+                    "TodoFargateTaskDefinition "
+                    f"{backend.endpoint.import_value}"
                 ),
             ],
         )
@@ -155,7 +155,6 @@ class CodeDeployStep(pipelines.Step):
                     task_definition_placeholder="IMAGE1_NAME",
                 )
             ],
-            variables_namespace="variable-namespace-",
         )
 
         stage.add_action(action)

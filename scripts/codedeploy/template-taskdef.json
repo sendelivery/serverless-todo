@@ -12,6 +12,12 @@
           "protocol": "tcp"
         }
       ],
+      "environment": [
+        {
+          "name": "TODO_API_ENDPOINT",
+          "value": "todo-api-endpoint-value"
+        }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
