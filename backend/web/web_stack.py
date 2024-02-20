@@ -36,6 +36,11 @@ class WebStack(Stack):
             f"{prefix}FargateTaskRole",
             role_name=f"{prefix}FargateTaskRole",
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "CloudWatchLogsFullAccess"
+                )
+            ],
         )
 
         # TODO pass this as a CF output, or find a deterministic way of getting in the custom code deploy step.
@@ -55,8 +60,9 @@ class WebStack(Stack):
                                 "ecr:batchchecklayeravailability",
                                 "ecr:getdownloadurlforlayer",
                                 "ecr:batchgetimage",
-                                "logs:createlogstream",
-                                "logs:putlogevents",
+                                "logs:CreateLogGroups",
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents",
                             ],
                         )
                     ]
