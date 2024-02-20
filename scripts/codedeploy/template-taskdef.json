@@ -3,7 +3,7 @@
   "containerDefinitions": [
     {
       "essential": true,
-      "image": "<IMAGE1_NAME>",
+      "image": "<IMAGE_PLACEHOLDER>",
       "name": "APPLICATION",
       "portMappings": [
         {
