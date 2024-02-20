@@ -2,9 +2,10 @@ from constructs import Construct
 from aws_cdk import aws_iam as iam
 
 
-class CodeBuildExecutionRole(Construct):
+# TODO make this extend the iam.Role class or implement the iam.IRole interface.
+class PipelineRole(Construct):
     """
-    An IAM role that allows the CodeBuild principal to push an image to any ECR repository.
+    An IAM role that allows the CodePipeline principal to push an image to any ECR repository.
     """
 
     @property
@@ -17,7 +18,7 @@ class CodeBuildExecutionRole(Construct):
         self._role = iam.Role(
             self,
             f"{id}AllowPushToEcrRepository",
-            assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
+            assumed_by=iam.ServicePrincipal("codepipeline.amazonaws.com"),
         )
 
         self._role.attach_inline_policy(
@@ -39,14 +40,7 @@ class CodeBuildExecutionRole(Construct):
                             ],
                             resources=["*"],
                             effect=iam.Effect.ALLOW,
-                        ),
-                        iam.PolicyStatement(
-                            actions=[
-                                "ssm:GetParameter",
-                            ],
-                            resources=["*"],
-                            effect=iam.Effect.ALLOW,
-                        ),
+                        )
                     ]
                 ),
             )

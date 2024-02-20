@@ -5,23 +5,23 @@ from aws_cdk import (
     aws_codedeploy as codedeploy,
 )
 
-from .backend_stage import ServerlessTodoBackendStage
-from .lib.codebuild_execution_role import CodeBuildExecutionRole
+from .lib.pipeline_role import PipelineRole
 from .lib.bluegreen_deployment_step import BlueGreenDeploymentStep
+
+from .backend_stage import ServerlessTodoBackendStage
 from .web_stage import ServerlessTodoWebStage
 
 
 class ServerlessTodoPipelineStack(Stack):
-    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, prefix: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
-
-        prefix = "Todo"
 
         ############################ PIPELINE START ############################
         pipeline = pipelines.CodePipeline(
             self,
             f"{prefix}Pipeline",
             pipeline_name=f"{prefix}Pipeline",
+            role=PipelineRole(self, f"{prefix}PipelineRole").role,
             publish_assets_in_parallel=False,
             synth=pipelines.ShellStep(
                 "Synth",
@@ -98,15 +98,11 @@ class ServerlessTodoPipelineStack(Stack):
                 **kwargs,
             ),
             pre=[
-                # TODO change this to a generic ShellStep and add the role to the pipeline itself?
-                pipelines.CodeBuildStep(
+                # This step uses the pipeline's source file set by default (i.e. GitHub),
+                # meaning we don't have to copy the web directory in the pipeline's synth step
+                # like we do the scripts directory.
+                pipelines.ShellStep(
                     "BuildAndUploadDockerImage",
-                    role=CodeBuildExecutionRole(
-                        self, "TodoCodeBuildExecutionRole"
-                    ).role,
-                    # This step uses the pipeline's source file set by default (i.e. GitHub),
-                    # meaning we don't have to copy the web directory in the pipeline's synth step
-                    # like we do the scripts directory.
                     commands=[
                         "chmod a+x ./scripts/pipeline/push_to_ecr",
                         f"./scripts/pipeline/push_to_ecr {container_repository}",
