@@ -60,7 +60,7 @@ class WebStack(Stack):
                                 "ecr:batchchecklayeravailability",
                                 "ecr:getdownloadurlforlayer",
                                 "ecr:batchgetimage",
-                                "logs:CreateLogGroups",
+                                "logs:CreateLogGroup",
                                 "logs:CreateLogStream",
                                 "logs:PutLogEvents",
                             ],
@@ -73,6 +73,7 @@ class WebStack(Stack):
         task_definition = ecs.FargateTaskDefinition(
             self,
             f"{prefix}FargateTaskDefinition",
+            family=f"{prefix}FargateTaskDefinition",
             task_role=task_role,
             execution_role=execution_role,
             cpu=256,
