@@ -68,7 +68,7 @@ class ServerlessTodoPipelineStack(Stack):
                     f"{'Todo'} "
                     f"{'Prod'} "
                     f"{pipeline.node.id} "
-                    f"{'TODO-Service'}"
+                    "TodoFargateTaskRole"
                 ),
             ],
         )
@@ -101,6 +101,7 @@ class ServerlessTodoPipelineStack(Stack):
                 **kwargs,
             ),
             pre=[
+                # TODO: change this to a generic ShellStep and add the role to the pipeline itself?
                 pipelines.CodeBuildStep(
                     "BuildAndUploadDockerImage",
                     role=CodeBuildExecutionRole(
