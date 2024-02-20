@@ -38,27 +38,40 @@ class WebStack(Stack):
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
         )
 
-        execution_policy = iam.PolicyStatement(
-            effect=iam.Effect.ALLOW,
-            resources=["*"],
-            actions=[
-                "ecr:getauthorizationtoken",
-                "ecr:batchchecklayeravailability",
-                "ecr:getdownloadurlforlayer",
-                "ecr:batchgetimage",
-                "logs:createlogstream",
-                "logs:putlogevents",
-            ],
+        # TODO pass this as a CF output, or find a deterministic way of getting in the custom code deploy step.
+        execution_role = iam.Role(
+            self,
+            f"{prefix}FargateTaskExecutionRole",
+            role_name=f"{prefix}FargateTaskExecutionRole",
+            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+            inline_policies={
+                "AllowEcrCommands": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            resources=["*"],
+                            actions=[
+                                "ecr:getauthorizationtoken",
+                                "ecr:batchchecklayeravailability",
+                                "ecr:getdownloadurlforlayer",
+                                "ecr:batchgetimage",
+                                "logs:createlogstream",
+                                "logs:putlogevents",
+                            ],
+                        )
+                    ]
+                )
+            },
         )
 
         task_definition = ecs.FargateTaskDefinition(
             self,
             f"{prefix}FargateTaskDefinition",
             task_role=task_role,
+            execution_role=execution_role,
             cpu=256,
             memory_limit_mib=512,
         )
-        task_definition.add_to_execution_role_policy(execution_policy)
 
         # Let's grab the latest build of our web app and use that in our task definition.
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"

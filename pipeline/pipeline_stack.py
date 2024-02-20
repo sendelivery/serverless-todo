@@ -68,7 +68,7 @@ class ServerlessTodoPipelineStack(Stack):
                     f"{'Todo'} "
                     f"{'Prod'} "
                     f"{pipeline.node.id} "
-                    "TodoFargateTaskRole"
+                    "TodoFargateTaskExecutionRole"
                 ),
             ],
         )
