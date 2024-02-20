@@ -155,26 +155,6 @@ class CodeDeployStep(pipelines.Step):
             ],
             variables_namespace="variable-namespace-",
         )
-        action.action_properties.role.attach_inline_policy(
-            iam.Policy(
-                self,
-                "AllowECSAllAtOncePolicy",
-                policy_name="AllowECSAllAtOncePolicy",
-                document=iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            actions=[
-                                "codedeploy:GetDeploymentConfig",
-                            ],
-                            resources=[
-                                "arn:aws:codedeploy:eu-west-2:460848972690:deploymentconfig:CodeDeployDefault.ECSAllAtOnce"
-                            ],
-                            effect=iam.Effect.ALLOW,
-                        )
-                    ]
-                ),
-            )
-        )
 
         stage.add_action(action)
 

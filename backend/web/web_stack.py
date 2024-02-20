@@ -154,6 +154,8 @@ class WebStack(Stack):
                 green_target_group=green_target_group,
                 listener=fargate_service.listener,
                 test_listener=green_listener,
-                termination_wait_time=Duration.minutes(15),
+                termination_wait_time=Duration.minutes(10),
+                deployment_approval_wait_time=Duration.minutes(5),
             ),
+            deployment_config=codedeploy.EcsDeploymentConfig.CANARY_10_PERCENT_5_MINUTES,
         )
