@@ -25,6 +25,7 @@ class ServerlessTodoPipelineStack(Stack):
             synth=pipelines.ShellStep(
                 "Synth",
                 input=pipelines.CodePipelineSource.git_hub(
+                    # TODO move these into environment variables
                     "sendelivery/serverless-todo-app",
                     "feature/fargate-web-app",
                 ),
@@ -76,11 +77,11 @@ class ServerlessTodoPipelineStack(Stack):
 
         # To configure our Blue Green deployment step we'll need to give it a reference to the
         # deployment group created in our web stack. To do this, we'll first grab a reference to
-        # the CodeDeploy application via its ARN.
-        cd_application = codedeploy.EcsApplication.from_ecs_application_arn(
+        # the CodeDeploy application via its name since we're working in the same environment.
+        cd_application = codedeploy.EcsApplication.from_ecs_application_name(
             self,
-            id=f"{prefix}CodeDeployApplicationFromArn",
-            ecs_application_arn=f"arn:aws:codedeploy:{self.region}:{self.account}:application:{prefix}BlueGreenApplication",
+            id=f"{prefix}CodeDeployApplicationFromName",
+            ecs_application_name=f"{prefix}DeploymentApplication",
         )
 
         # Next, we can grab the deployment group itself from the application.
@@ -97,11 +98,13 @@ class ServerlessTodoPipelineStack(Stack):
             deployment_group=cd_deployment_group,
             prefix=prefix,
         )
+
+        # Deploying a "green" version of our application is dependent on having the correct task
+        # definition and app spec files - i.e. the ouptput of our configure_codedeploy_step script.
         deploy_step.add_step_dependency(configure_codedeploy_step)
 
-        container_repository = (
-            "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app"
-        )
+        # TODO ECR repo should be created in the stateful stack.
+        container_repository = f"{self.account}.dkr.ecr.{self.region}.amazonaws.com/serverless-todo-web-app"
 
         pipeline.add_stage(
             ServerlessTodoWebStage(

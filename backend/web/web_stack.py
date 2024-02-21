@@ -57,7 +57,6 @@ class WebStack(Stack):
             ],
         )
 
-        # TODO pass this as a CF output, or find a deterministic way of getting in the custom code deploy step.
         # TODO narrow inline policy to the exact ECR repository we need.
         execution_role = iam.Role(
             self,
@@ -145,6 +144,31 @@ class WebStack(Stack):
 
         # From here on, we'll define the resources required for the Blue / Green deployment
         # strategy.
+        # TODO move this out into a custom construct?
+
+        app = codedeploy.EcsApplication(
+            self,
+            f"{prefix}DeploymentApplication",
+            application_name=f"{prefix}DeploymentApplication",
+        )
+
+        # Define the "green" target group and listener that our ALB will use to route canary
+        # traffic.
+        green_target_group = elb.ApplicationTargetGroup(
+            self,
+            f"{prefix}GreenTargetGroup",
+            target_group_name=f"{prefix}GreenTargetGroup",
+            protocol=elb.ApplicationProtocol.HTTP,
+            target_type=elb.TargetType.IP,
+            vpc=vpc,
+        )
+
+        green_listener = fargate_service.load_balancer.add_listener(
+            f"{prefix}GreenListener",
+            port=8080,
+            protocol=elb.ApplicationProtocol.HTTP,
+            default_target_groups=[green_target_group],
+        )
 
         # TODO how much of this is actually required by our deployment group?
         codedeploy_execution_role_policies = [
@@ -162,39 +186,19 @@ class WebStack(Stack):
             ),
         ]
 
+        # This is the execution role used by the CodeDeploy deployment group.
+        # A deployment group is a collection of compute instances targeted for deployment.
         codedeploy_execution_role = iam.Role(
             self,
             f"{prefix}BGDeploymentExecutionRole",
-            role_name=f"{prefix}CodeDeployExecutionRole",
+            role_name=f"{prefix}BGDeploymentExecutionRole",
             assumed_by=iam.ServicePrincipal("codedeploy.amazonaws.com"),
             managed_policies=codedeploy_execution_role_policies,
         )
 
-        app = codedeploy.EcsApplication(
-            self,
-            f"{prefix}BlueGreenApplication",
-            application_name=f"{prefix}BlueGreenApplication",
-        )
-
-        green_target_group = elb.ApplicationTargetGroup(
-            self,
-            f"{prefix}GreenTargetGroup",
-            target_group_name=f"{prefix}GreenTargetGroup",
-            protocol=elb.ApplicationProtocol.HTTP,
-            target_type=elb.TargetType.IP,
-            vpc=vpc,
-        )
-
-        green_listener = fargate_service.load_balancer.add_listener(
-            f"{prefix}GreenListener",
-            port=8080,
-            protocol=elb.ApplicationProtocol.HTTP,
-            default_target_groups=[green_target_group],
-        )
-
         codedeploy.EcsDeploymentGroup(
             self,
-            f"{prefix}BlueGreenDeploymentGroupId",
+            f"{prefix}BlueGreenDeploymentGroup",
             deployment_group_name=f"{prefix}BlueGreenDeploymentGroup",
             application=app,
             service=fargate_service.service,
