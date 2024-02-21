@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_codedeploy as codedeploy,
     aws_elasticloadbalancingv2 as elb,
+    aws_ssm as ssm,
 )
 from constructs import Construct
 
@@ -29,7 +30,6 @@ class WebStack(Stack):
         scope: Construct,
         construct_id: str,
         prefix: str,
-        todo_endpoint: str,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -101,6 +101,12 @@ class WebStack(Stack):
         # one tagged as "latest" in our ECR repo. This alone, however, is not enough to handle
         # deploying new versions of our image. Hence the deployment group created further down.
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
+
+        # Source the API endpoint at deploy time, not synth time.
+        todo_endpoint = ssm.StringParameter.value_for_string_parameter(
+            self, f"{prefix}ApiEndpoint"
+        )
+
         task_definition.add_container(
             f"{prefix}Container",
             container_name=f"{prefix}Container",

@@ -14,6 +14,7 @@ class StatefulStack(Stack):
     def entries_table(self):
         """
         The DynamoDB table used to store todo entries, created by our stateful stack.
+        Using the table property will create an implicit CloudFormation output.
         """
         return self._entries_table
 

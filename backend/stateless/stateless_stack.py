@@ -1,11 +1,11 @@
 from constructs import Construct
 from aws_cdk.aws_dynamodb import Table
 from aws_cdk import (
-    CfnOutput,
     Stack,
     aws_lambda as _lambda,
     aws_apigateway as apigw,
     aws_iam as iam,
+    aws_ssm as ssm,
 )
 
 
@@ -14,13 +14,6 @@ from aws_cdk import (
 
 
 class StatelessStack(Stack):
-    @property
-    def endpoint(self) -> CfnOutput:
-        """
-        The API Gateway endpoint of our backend application as a CfnOutput.
-        """
-        return self._endpoint
-
     def __init__(
         self,
         scope: Construct,
@@ -179,11 +172,13 @@ class StatelessStack(Stack):
             ),
         )
 
-        # We'll expose our API Gateway endpoint as a CFN output so our pipeline and web stacks can
-        # import it later.
-        self._endpoint = CfnOutput(
+        # We'll expose our API Gateway endpoint using SSM Parameter Store so we have a decoupled
+        # way of accessing it later in our pipeline and web stacks. Using a CfnOutput would make
+        # it tricky to update the stateless stack in the event the API GW URL changed, as the
+        # output would make this stack a dependant for the web stack, and thus cannot be updated!
+        ssm.StringParameter(
             self,
             f"{prefix}ApiEndpoint",
-            export_name=f"{prefix}ApiEndpoint",
-            value=api.url,
+            parameter_name=f"{prefix}ApiEndpoint",
+            string_value=api.url,
         )

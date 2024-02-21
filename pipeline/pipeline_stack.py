@@ -59,8 +59,7 @@ class ServerlessTodoPipelineStack(Stack):
                     f"{'Prod'} "
                     f"{pipeline.node.id} "
                     "TodoFargateTaskExecutionRole "
-                    "TodoFargateTaskDefinition "
-                    f"{backend.endpoint.import_value}"
+                    "TodoFargateTaskDefinition"
                 ),
             ],
         )
@@ -98,7 +97,6 @@ class ServerlessTodoPipelineStack(Stack):
                 self,
                 "TempWebStage",
                 prefix="Todo",
-                todo_endpoint=backend.endpoint.import_value,
                 **kwargs,
             ),
             pre=[
