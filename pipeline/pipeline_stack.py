@@ -3,6 +3,7 @@ from aws_cdk import (
     Stack,
     pipelines as pipelines,
     aws_codedeploy as codedeploy,
+    aws_iam as iam,
 )
 
 from .lib.pipeline_role import PipelineRole
@@ -21,7 +22,6 @@ class ServerlessTodoPipelineStack(Stack):
             self,
             f"{prefix}Pipeline",
             pipeline_name=f"{prefix}Pipeline",
-            role=PipelineRole(self, f"{prefix}PipelineRole").role,
             publish_assets_in_parallel=False,
             synth=pipelines.ShellStep(
                 "Synth",
@@ -66,14 +66,19 @@ class ServerlessTodoPipelineStack(Stack):
             ],
         )
 
+        # To configure our Blue Green deployment step we'll need to give it a reference to the
+        # deployment group created in our web stack. To do this, we'll first grab a reference to
+        # the CodeDeploy application via its ARN.
         cd_application = codedeploy.EcsApplication.from_ecs_application_arn(
             self,
-            id="cd_application_from_arn",
-            ecs_application_arn="arn:aws:codedeploy:eu-west-2:460848972690:application:BlueGreenApplication",
+            id=f"{prefix}CodeDeployApplicationFromArn",
+            ecs_application_arn=f"arn:aws:codedeploy:{self.region}:{self.account}:application:BlueGreenApplication",
         )
+
+        # Next, we can grab the deployment group itself from the application.
         cd_deployment_group = codedeploy.EcsDeploymentGroup.from_ecs_deployment_group_attributes(
             self,
-            "ECSDeploymentGroupId",
+            f"{prefix}ECSDeploymentGroupId",
             application=cd_application,
             deployment_group_name="BlueGreenDeploymentGroup",
             deployment_config=codedeploy.EcsDeploymentConfig.CANARY_10_PERCENT_5_MINUTES,
@@ -101,11 +106,27 @@ class ServerlessTodoPipelineStack(Stack):
                 # This step uses the pipeline's source file set by default (i.e. GitHub),
                 # meaning we don't have to copy the web directory in the pipeline's synth step
                 # like we do the scripts directory.
-                pipelines.ShellStep(
+                pipelines.CodeBuildStep(
                     "BuildAndUploadDockerImage",
                     commands=[
                         "chmod a+x ./scripts/pipeline/push_to_ecr",
                         f"./scripts/pipeline/push_to_ecr {container_repository}",
+                    ],
+                    role_policy_statements=[
+                        iam.PolicyStatement(
+                            actions=[
+                                "ecr:BatchCheckLayerAvailability",
+                                "ecr:CompleteLayerUpload",
+                                "ecr:GetAuthorizationToken",
+                                "ecr:InitiateLayerUpload",
+                                "ecr:PutImage",
+                                "ecr:UploadLayerPart",
+                                "ecr:BatchGetImage",
+                                "ecr:GetDownloadUrlForLayer",
+                            ],
+                            resources=["*"],
+                            effect=iam.Effect.ALLOW,
+                        )
                     ],
                 )
             ],
