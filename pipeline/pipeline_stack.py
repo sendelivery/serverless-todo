@@ -44,22 +44,32 @@ class ServerlessTodoPipelineStack(Stack):
         ############################ APPLICATION / STORAGE END ############################
 
         ############################ WEB START ############################
-        configure_codedeploy_step = pipelines.ShellStep(
+        configure_codedeploy_step = pipelines.CodeBuildStep(
             "ConfigureBlueGreenDeployment",
             input=pipeline.cloud_assembly_file_set,
             primary_output_directory="codedeploy",
+            role_policy_statements=[
+                iam.PolicyStatement(
+                    actions=["ssm:GetParameter"],
+                    resources=[
+                        f"arn:aws:ssm:{self.account}:{self.region}:parameter/{prefix}ApiEndpoint",
+                    ],
+                    effect=iam.Effect.ALLOW,
+                )
+            ],
             commands=[
                 "ls",
                 "chmod a+x ./codedeploy/configure_codedeploy_step",
                 (
+                    # TODO document what each of the arguments are in a clear way...
                     "./codedeploy/configure_codedeploy_step "
                     f"{self.account} "
                     f"{self.region} "
                     f"{'Todo'} "
                     f"{'Prod'} "
                     f"{pipeline.node.id} "
-                    "TodoFargateTaskExecutionRole "
-                    "TodoFargateTaskDefinition"
+                    f"{prefix}FargateTaskExecutionRole "
+                    f"{prefix}FargateTaskDefinition"
                 ),
             ],
         )
@@ -70,7 +80,7 @@ class ServerlessTodoPipelineStack(Stack):
         cd_application = codedeploy.EcsApplication.from_ecs_application_arn(
             self,
             id=f"{prefix}CodeDeployApplicationFromArn",
-            ecs_application_arn=f"arn:aws:codedeploy:{self.region}:{self.account}:application:BlueGreenApplication",
+            ecs_application_arn=f"arn:aws:codedeploy:{self.region}:{self.account}:application:{prefix}BlueGreenApplication",
         )
 
         # Next, we can grab the deployment group itself from the application.
@@ -78,13 +88,14 @@ class ServerlessTodoPipelineStack(Stack):
             self,
             f"{prefix}ECSDeploymentGroupId",
             application=cd_application,
-            deployment_group_name="BlueGreenDeploymentGroup",
+            deployment_group_name=f"{prefix}BlueGreenDeploymentGroup",
             deployment_config=codedeploy.EcsDeploymentConfig.CANARY_10_PERCENT_5_MINUTES,
         )
 
         deploy_step = BlueGreenDeploymentStep(
-            input=configure_codedeploy_step.primary_output,
+            input_fileset=configure_codedeploy_step.primary_output,
             deployment_group=cd_deployment_group,
+            prefix=prefix,
         )
         deploy_step.add_step_dependency(configure_codedeploy_step)
 
@@ -95,8 +106,8 @@ class ServerlessTodoPipelineStack(Stack):
         pipeline.add_stage(
             ServerlessTodoWebStage(
                 self,
-                "TempWebStage",
-                prefix="Todo",
+                f"{prefix}WebStage",
+                prefix=prefix,
                 **kwargs,
             ),
             pre=[
@@ -104,7 +115,7 @@ class ServerlessTodoPipelineStack(Stack):
                 # meaning we don't have to copy the web directory in the pipeline's synth step
                 # like we do the scripts directory.
                 pipelines.CodeBuildStep(
-                    "BuildAndUploadDockerImage",
+                    f"{prefix}BuildAndUploadDockerImage",
                     commands=[
                         "chmod a+x ./scripts/pipeline/push_to_ecr",
                         f"./scripts/pipeline/push_to_ecr {container_repository}",

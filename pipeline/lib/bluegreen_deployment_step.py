@@ -1,4 +1,5 @@
 import jsii
+
 from aws_cdk import (
     pipelines,
     aws_codepipeline as codepipeline,
@@ -11,13 +12,15 @@ from aws_cdk import (
 class BlueGreenDeploymentStep(pipelines.Step):
     def __init__(
         self,
-        input: pipelines.FileSet,
+        input_fileset: pipelines.FileSet,
         deployment_group: codedeploy.IEcsDeploymentGroup,
+        prefix: str,
     ):
-        super().__init__("MyCodeDeployStep")
+        super().__init__(f"{prefix}BlueGreenDeploymentStep")
 
-        self._input = input
+        self._input_fileset = input_fileset
         self._deployment_group = deployment_group
+        self._prefix = prefix
 
     def produce_action(
         self,
@@ -26,10 +29,10 @@ class BlueGreenDeploymentStep(pipelines.Step):
         run_order,
         artifacts: pipelines.ArtifactMap,
     ):
-        artifact = artifacts.to_code_pipeline(self._input)
+        artifact = artifacts.to_code_pipeline(self._input_fileset)
 
         action = cp_actions.CodeDeployEcsDeployAction(
-            action_name="CustomCodeDeployAction",
+            action_name=f"{self._prefix}CustomCodeDeployAction",
             deployment_group=self._deployment_group,
             app_spec_template_input=artifact,
             task_definition_template_input=artifact,
