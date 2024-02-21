@@ -6,7 +6,6 @@ from aws_cdk import (
     aws_iam as iam,
 )
 
-from .lib.pipeline_role import PipelineRole
 from .lib.bluegreen_deployment_step import BlueGreenDeploymentStep
 
 from .backend_stage import ServerlessTodoBackendStage

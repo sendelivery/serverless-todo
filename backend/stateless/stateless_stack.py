@@ -6,30 +6,20 @@ from aws_cdk import (
     aws_lambda as _lambda,
     aws_apigateway as apigw,
     aws_iam as iam,
-    # aws_ssm as ssm,
-    Aws,
 )
-from backend.stateless.lib.restapi_with_key import RestApiWithApiKey
 
 
-# This stack consists of a handful of Lambdas for CRUD operations, each utilising the same layer
-# to interact with DynamoDB. They are fronted by an API Gateway stage,
+# This stack consists of a handful of Lambdas for CRUD operations, each making use of a Lambda
+# layer to interact with DynamoDB. They are fronted by an API Gateway stage.
 
 
 class StatelessStack(Stack):
     @property
-    def endpoint(self):
+    def endpoint(self) -> CfnOutput:
         """
-        The API Gateway endpoint of our backend application.
+        The API Gateway endpoint of our backend application as a CfnOutput.
         """
         return self._endpoint
-
-    # @property
-    # def api_key(self):
-    #     """
-    #     The API Gateway API key of our backend application.
-    #     """
-    #     return self._api_key
 
     def __init__(
         self,
@@ -97,57 +87,55 @@ class StatelessStack(Stack):
             delete_entries_function, "dynamodb:DescribeTable", "dynamodb:DeleteItem"
         )
 
-        # Define a rest API with an API key using our custom construct
-        api = RestApiWithApiKey(
+        # Define the REST API - deploy "latestDeployment" by default
+        # TODO lock down the API GW and Lambda functions using a VPC - "networking" stack
+        api = apigw.RestApi(
             self,
-            id=f"{prefix}Api",
-            name=f"{prefix}Api",
-            resource_name="entries",
+            f"{prefix}ApiDeploymentStage",
+            rest_api_name=f"{prefix}Api",
+            deploy=True,
         )
+        entries_resource = api.root.add_resource("entries")
 
         # Define GET method for /entries
-        entries_get_method = api.resource.add_method(
+        entries_get_method = entries_resource.add_method(
             "GET",
             authorization_type=None,
             integration=apigw.AwsIntegration(
                 service="lambda",
-                region=Aws.REGION,
                 proxy=True,
                 path=f"2015-03-31/functions/{get_entries_function.function_arn}/invocations",
             ),
         )
 
         # Define POST method for /entries
-        entries_post_method = api.resource.add_method(
+        entries_post_method = entries_resource.add_method(
             "POST",
             authorization_type=None,
             integration=apigw.AwsIntegration(
                 service="lambda",
-                region=Aws.REGION,
                 proxy=True,
                 path=f"2015-03-31/functions/{upsert_entries_function.function_arn}/invocations",
             ),
         )
 
         # Define PUT method for /entries
-        entries_put_method = api.resource.add_method(
+        entries_put_method = entries_resource.add_method(
             "PUT",
             authorization_type=None,
             integration=apigw.AwsIntegration(
                 service="lambda",
-                region=Aws.REGION,
                 proxy=True,
                 path=f"2015-03-31/functions/{upsert_entries_function.function_arn}/invocations",
             ),
         )
 
         # Define DELETE method for /entries
-        entries_delete_method = api.resource.add_method(
+        entries_delete_method = entries_resource.add_method(
             "DELETE",
             authorization_type=None,
             integration=apigw.AwsIntegration(
                 service="lambda",
-                region=Aws.REGION,
                 proxy=True,
                 path=f"2015-03-31/functions/{delete_entries_function.function_arn}/invocations",
             ),
@@ -158,8 +146,8 @@ class StatelessStack(Stack):
             f"{prefix}ApiGWInvokeGetEntriesPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
-            source_arn=api.rest_api.arn_for_execute_api(
-                method=entries_get_method.http_method, path=api.resource.path
+            source_arn=api.arn_for_execute_api(
+                method=entries_get_method.http_method, path=entries_resource.path
             ),
         )
 
@@ -168,16 +156,16 @@ class StatelessStack(Stack):
             f"{prefix}ApiGWInvokeUpsertEntriesPOSTPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
-            source_arn=api.rest_api.arn_for_execute_api(
-                method=entries_post_method.http_method, path=api.resource.path
+            source_arn=api.arn_for_execute_api(
+                method=entries_post_method.http_method, path=entries_resource.path
             ),
         )
         upsert_entries_function.add_permission(
             f"{prefix}ApiGWInvokeUpsertEntriesPUTPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
-            source_arn=api.rest_api.arn_for_execute_api(
-                method=entries_put_method.http_method, path=api.resource.path
+            source_arn=api.arn_for_execute_api(
+                method=entries_put_method.http_method, path=entries_resource.path
             ),
         )
 
@@ -186,37 +174,16 @@ class StatelessStack(Stack):
             f"{prefix}ApiGWInvokeDeleteEntriesPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
-            source_arn=api.rest_api.arn_for_execute_api(
-                method=entries_delete_method.http_method, path=api.resource.path
+            source_arn=api.arn_for_execute_api(
+                method=entries_delete_method.http_method, path=entries_resource.path
             ),
         )
 
-        # # Lets expose our API Gateway endpoint and key as a CFN outputs so our web stage can access
-        # # them later.
+        # We'll expose our API Gateway endpoint as a CFN output so our pipeline and web stacks can
+        # import it later.
         self._endpoint = CfnOutput(
             self,
             f"{prefix}ApiEndpoint",
             export_name=f"{prefix}ApiEndpoint",
-            value=api.rest_api.url,
+            value=api.url,
         )
-        # self._api_key = CfnOutput(
-        #     self,
-        #     f"{prefix}ApiKey",
-        #     export_name=f"{prefix}ApiKey",
-        #     value=api.api_key_value,
-        # )
-
-        # self._endpoint = api.rest_api.url
-        # ssm.StringParameter(
-        #     self,
-        #     f"{prefix}ApiEndpoint",
-        #     parameter_name=f"{prefix}ApiEndpoint",
-        #     string_value=api.rest_api.url,
-        # )
-        # self._api_key = api.api_key_value
-        # ssm.StringParameter(
-        #     self,
-        #     f"{prefix}ApiKey",
-        #     parameter_name=f"{prefix}ApiKey",
-        #     string_value=api.api_key_value,
-        # )

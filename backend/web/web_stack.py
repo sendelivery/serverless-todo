@@ -11,6 +11,18 @@ from aws_cdk import (
 from constructs import Construct
 
 
+# This stack holds all the resources related to hosting our web app for public access. The solution
+# consists of:
+#   - A VPC with 2 AZs and an ECS Cluster wired up to that VPC.
+#   - An ECS Fargate task definition and container that will be launched in our cluster.
+#   - An L3 construct `ApplicationLoadBalancedFargateService` that provisions an ALB, handles
+#     deploying our initial container with a desired count of 1, and routes traffic accordingly.
+#
+# We also provision a CodeDeploy application and deployment group, as well as a "green" LB target
+# group. We'll use these in our production pipeline as part of the "Blue / Green" deployment
+# strategy.
+
+
 class WebStack(Stack):
     def __init__(
         self,
@@ -22,12 +34,14 @@ class WebStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        # TODO move any networking related resources into a "networking" stack and expose resources
+        # via CfnOutputs.
         vpc = ec2.Vpc(self, f"{prefix}Vpc", max_azs=2)
 
         cluster = ecs.Cluster(
             self,
-            f"{prefix}FargateCluster",
-            cluster_name=f"{prefix}FargateCluster",
+            f"{prefix}Cluster",
+            cluster_name=f"{prefix}Cluster",
             vpc=vpc,
         )
 
@@ -44,6 +58,7 @@ class WebStack(Stack):
         )
 
         # TODO pass this as a CF output, or find a deterministic way of getting in the custom code deploy step.
+        # TODO narrow inline policy to the exact ECR repository we need.
         execution_role = iam.Role(
             self,
             f"{prefix}FargateTaskExecutionRole",
@@ -56,10 +71,10 @@ class WebStack(Stack):
                             effect=iam.Effect.ALLOW,
                             resources=["*"],
                             actions=[
-                                "ecr:getauthorizationtoken",
-                                "ecr:batchchecklayeravailability",
-                                "ecr:getdownloadurlforlayer",
-                                "ecr:batchgetimage",
+                                "ecr:GetAuthorizationToken",
+                                "ecr:BatchCheckLayerAvailability",
+                                "ecr:GetDownloadUrlForLayer",
+                                "ecr:BatchGetImage",
                                 "logs:CreateLogGroup",
                                 "logs:CreateLogStream",
                                 "logs:PutLogEvents",
@@ -70,6 +85,8 @@ class WebStack(Stack):
             },
         )
 
+        # Create a task definition to tell ECS how to run our Next.js container.
+        # Using defaults and the bare minimum in terms of CPU / RAM will be more than enough.
         task_definition = ecs.FargateTaskDefinition(
             self,
             f"{prefix}FargateTaskDefinition",
@@ -80,92 +97,99 @@ class WebStack(Stack):
             memory_limit_mib=512,
         )
 
-        # Let's grab the latest build of our web app and use that in our task definition.
+        # We'll add the container that will run the web app here, the container image will be the
+        # one tagged as "latest" in our ECR repo. This alone, however, is not enough to handle
+        # deploying new versions of our image. Hence the deployment group created further down.
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
-        container = task_definition.add_container(
+        task_definition.add_container(
             f"{prefix}Container",
+            container_name=f"{prefix}Container",
             image=ecs.ContainerImage.from_registry(base_image),
-            environment={
-                "TODO_API_ENDPOINT": todo_endpoint,
-            },
-            memory_limit_mib=256,
+            environment={"TODO_API_ENDPOINT": todo_endpoint},
+            memory_limit_mib=512,
             cpu=256,
             # https://stackoverflow.com/questions/55702196/essential-container-in-task-exited
-            logging=ecs.AwsLogDriver(stream_prefix=f"{prefix}-ecs-logs"),
-        )
-        container.add_port_mappings(
-            ecs.PortMapping(
-                host_port=3000, container_port=3000, protocol=ecs.Protocol.TCP
-            )
+            logging=ecs.AwsLogDriver(stream_prefix=prefix),
+            port_mappings=[
+                # Next.js uses port 3000 by default, we'll adhere to that.
+                ecs.PortMapping(
+                    host_port=3000, container_port=3000, protocol=ecs.Protocol.TCP
+                )
+            ],
         )
 
+        # The ALB fronting our cluster will be internet-facing and be assigned a public IP so that
+        # traffic can reach it via the public internet.
+        # TODO does assign_public_ip need to be True?
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             f"{prefix}ALBFargateService",
+            load_balancer_name=f"{prefix}Alb",
+            service_name=f"{prefix}FargateService",
             cluster=cluster,
             task_definition=task_definition,
-            public_load_balancer=True,
             desired_count=1,
             listener_port=80,
             assign_public_ip=True,
+            public_load_balancer=True,
             deployment_controller=ecs.DeploymentController(
                 type=ecs.DeploymentControllerType.CODE_DEPLOY
             ),
         )
 
+        # From here on, we'll define the resources required for the Blue / Green deployment
+        # strategy.
+
+        # TODO how much of this is actually required by our deployment group?
+        codedeploy_execution_role_policies = [
+            iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchLogsFullAccess"),
+            iam.ManagedPolicy.from_aws_managed_policy_name("AWSCodeDeployRoleForECS"),
+            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonECS_FullAccess"),
+            iam.ManagedPolicy.from_aws_managed_policy_name(
+                "AWSCodeBuildDeveloperAccess"
+            ),
+            iam.ManagedPolicy.from_aws_managed_policy_name(
+                "AmazonEC2ContainerRegistryFullAccess"
+            ),
+            iam.ManagedPolicy.from_aws_managed_policy_name(
+                "service-role/AWSLambdaBasicExecutionRole"
+            ),
+        ]
+
         codedeploy_execution_role = iam.Role(
             self,
-            "CodeDeployExecutionRoleId",
+            f"{prefix}BGDeploymentExecutionRole",
+            role_name=f"{prefix}CodeDeployExecutionRole",
             assumed_by=iam.ServicePrincipal("codedeploy.amazonaws.com"),
-            managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AWSCodeBuildDeveloperAccess"
-                ),
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AmazonEC2ContainerRegistryFullAccess"
-                ),
-                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonECS_FullAccess"),
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "CloudWatchLogsFullAccess"
-                ),
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AWSCodeDeployRoleForECS"
-                ),
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "service-role/AWSLambdaBasicExecutionRole"
-                ),
-            ],
+            managed_policies=codedeploy_execution_role_policies,
         )
 
         app = codedeploy.EcsApplication(
-            self, "BlueGreenApplicationId", application_name="BlueGreenApplication"
+            self,
+            f"{prefix}BlueGreenApplication",
+            application_name=f"{prefix}BlueGreenApplication",
         )
 
         green_target_group = elb.ApplicationTargetGroup(
             self,
-            "GreenTgId",
+            f"{prefix}GreenTargetGroup",
+            target_group_name=f"{prefix}GreenTargetGroup",
             protocol=elb.ApplicationProtocol.HTTP,
-            target_group_name="GreenTgName",
             target_type=elb.TargetType.IP,
             vpc=vpc,
         )
 
         green_listener = fargate_service.load_balancer.add_listener(
-            "GreenListener",
+            f"{prefix}GreenListener",
             port=8080,
-            default_target_groups=[green_target_group],
             protocol=elb.ApplicationProtocol.HTTP,
-        )
-
-        green_listener.add_action(
-            "GreenListenerActionId",
-            action=elb.ListenerAction.forward(target_groups=[green_target_group]),
+            default_target_groups=[green_target_group],
         )
 
         codedeploy.EcsDeploymentGroup(
             self,
-            deployment_group_name="BlueGreenDeploymentGroup",
-            id="BlueGreenDeploymentGroupId",
+            f"{prefix}BlueGreenDeploymentGroupId",
+            deployment_group_name=f"{prefix}BlueGreenDeploymentGroup",
             application=app,
             service=fargate_service.service,
             role=codedeploy_execution_role,
