@@ -62,22 +62,23 @@ class ServerlessTodoPipelineStack(Stack):
                 "ls",
                 "chmod a+x ./codedeploy/configure_codedeploy_step",
                 (
-                    # TODO document what each of the arguments are in a clear way...
+                    # View the script to view the details of the required parameters.
                     "./codedeploy/configure_codedeploy_step "
+                    f"{pipeline.node.id} "
                     f"{self.account} "
                     f"{self.region} "
-                    f"{'Todo'} "
-                    f"{'Prod'} "
-                    f"{pipeline.node.id} "
+                    f"{prefix}Container "
                     f"{prefix}FargateTaskExecutionRole "
-                    f"{prefix}FargateTaskDefinition"
+                    f"{prefix}FargateTaskDefinition "
+                    f"{prefix}ApiEndpoint"
                 ),
             ],
         )
 
         # To configure our Blue Green deployment step we'll need to give it a reference to the
         # deployment group created in our web stack. To do this, we'll first grab a reference to
-        # the CodeDeploy application via its name since we're working in the same environment.
+        # the CodeDeploy application via its name, as opposed to ARN, since we're working in the
+        # same environment.
         cd_application = codedeploy.EcsApplication.from_ecs_application_name(
             self,
             id=f"{prefix}CodeDeployApplicationFromName",

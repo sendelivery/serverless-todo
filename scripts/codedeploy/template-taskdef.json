@@ -4,7 +4,7 @@
     {
       "essential": true,
       "image": "<IMAGE_PLACEHOLDER>",
-      "name": "APPLICATION",
+      "name": "CONTAINER_NAME",
       "portMappings": [
         {
           "containerPort": 3000,
@@ -15,22 +15,23 @@
       "environment": [
         {
           "name": "TODO_API_ENDPOINT",
-          "value": "todo-api-endpoint-value"
+          "value": "TODO_API_ENDPOINT_VALUE"
         }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
+          // TODO: figure something out for consistent and predictable log groups / streams
           "awslogs-create-group": "true",
           "awslogs-group": "APPLICATION-ECS",
           "awslogs-region": "REGION",
-          "awslogs-stream-prefix": "todo-ecs-"
+          "awslogs-stream-prefix": "STREAM_PREFIX"
         }
       }
     }
   ],
   "cpu": "256",
-  "family": "fargate-task-definition",
+  "family": "TASK_DEF",
   "memory": "512",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"]

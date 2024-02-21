@@ -1,55 +1,56 @@
-#!/bin/sh
+#!/bin/bash
 #
-# Action Configure AWS CodeDeploy
-# It customizes the files template-appspec.yaml and template-taskdef.json to the environment
+# This script configures the blue / green deployment step by customising the
+# Fargate task definition and CodeDeploy app spec files found in the same
+# directory.
 #
-# Account = The Account Id
-# AppName = Name of the application
-# StageName = Name of the stage
-# Region = Name of the region (us-east-1, us-east-2)
-# PipelineId = Id of the pipeline
-# ServiceName = Name of the service. It will be used to define the role and the task definition name
+# The generated files are included as the step's output file set for later use.
 #
-# Primary output directory is codedeploy/. All the 3 files created (appspec.json, imageDetail.json and
-# taskDef.json) will be located inside the codedeploy/ directory
+# pipeline_id = Id of the pipeline, for debugging
+# account = AWS environment account ID
+# region = AWS environment region (e.g. eu-west-1)
+# container_name = Name of the container that will be created
+# task_execution_role_name = Name of the task exec role, used to derive its ARN
+# api_endpoint_ssm_param = Name of the SSM parameter that stores our endpoint
 #
-##
-Account=$1
-Region=$2
-AppName=$3
-StageName=$4
-PipelineId=$5
-ServiceName=$6
-FamilyName=$7
-TodoApiEndpoint="$(aws ssm get-parameter --name TodoApiEndpoint --query Parameter.Value)"
+# Primary output directory is codedeploy/. All the 3 files created
+# (appspec.json, imageDetail.json and taskDef.json) will be located inside the
+# codedeploy/ directory.
+#
 
-echo "Account:" "$Account"
-echo "Region:" "$Region"
-echo "AppName:" "$AppName"
-echo "StageName:" "$StageName"
-echo "PipelineId:" "$PipelineId"
-echo "ServiceName:" "$ServiceName"
-echo "ServiceName:" "$FamilyName"
+pipeline_id=$1
+account=$2
+region=$3
+container_name=$4
+task_execution_role_name=$5
+task_definition_name=$6
+api_endpoint_ssm_param=$7
+
+echo "Pipeline Id:" "$pipeline_id"
+echo "Account:" "$account"
+echo "Region:" "$region"
+echo "Container Name:" "$container_name"
+echo "Task Execution Role Name:" "$task_execution_role_name"
+echo "Task Definition Name:" "$task_definition_name"
+echo "API Endpoint SSM Param Name:" "$api_endpoint_ssm_param"
+
+TodoApiEndpoint="$(aws ssm get-parameter --name "$api_endpoint_ssm_param" --query Parameter.Value)"
+
 echo "TodoApiEndpoint:" "$TodoApiEndpoint"
 
 ls -l
 ls -l codedeploy
 
-# repo_name=$(cat assembly*$PipelineId-$StageName/*.assets.json | jq -r '.dockerImages[] | .destinations[] | .repositoryName' | head -1)
-# tag_name=$(cat assembly*$PipelineId-$StageName/*.assets.json | jq -r '.dockerImages | to_entries[0].key')
-# echo ${repo_name}
-# echo ${tag_name}
-# printf '{"ImageURI":"%s"}' "$Account.dkr.ecr.$Region.amazonaws.com/${repo_name}:${tag_name}" >codedeploy/imageDetail.json
-# printf '{"ImageURI":"%s"}' "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest" >codedeploy/imageDetail.json
+printf '{"ImageURI":"%s"}' "$account.dkr.ecr.$region.amazonaws.com/serverless-todo-web-app:latest" >codedeploy/imageDetail.json
 
-printf '{"ImageURI":"%s"}' "$Account.dkr.ecr.$Region.amazonaws.com/serverless-todo-web-app:latest" >codedeploy/imageDetail.json
+# Edit the templates using stream edit and output the changes to a new file
+# these files will be included in out output file set.
+sed 's#CONTAINER_NAME#'"$container_name"'#g' codedeploy/template-appspec.yaml >codedeploy/appspec.yaml
 
-sed 's#APPLICATION#'"$AppName"'#g' codedeploy/template-appspec.yaml >codedeploy/appspec.yaml
-
-sed 's#APPLICATION#'"$AppName"'#g' codedeploy/template-taskdef.json |
-  sed 's#TASK_EXEC_ROLE#arn:aws:iam::'"$Account"':role/'"$ServiceName"'#g' |
-  sed 's#REGION#'"$Region"'#g' | sed 's#fargate-task-definition#'"$FamilyName"'#g' |
-  sed 's#todo-api-endpoint-value#'"$TodoApiEndpoint"'#g' >codedeploy/taskdef.json
+sed 's#CONTAINER_NAME#'"$container_name"'#g' codedeploy/template-taskdef.json |
+  sed 's#TASK_EXEC_ROLE#arn:aws:iam::'"$account"':role/'"$task_execution_role_name"'#g' |
+  sed 's#REGION#'"$region"'#g' | sed 's#TASK_DEF#'"$task_definition_name"'#g' |
+  sed 's#TODO_API_ENDPOINT_VALUE#'"$TodoApiEndpoint"'#g' >codedeploy/taskdef.json
 
 cat codedeploy/appspec.yaml
 cat codedeploy/taskdef.json

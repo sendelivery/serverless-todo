@@ -146,7 +146,7 @@ class WebStack(Stack):
         # strategy.
         # TODO move this out into a custom construct?
 
-        app = codedeploy.EcsApplication(
+        codedeploy_application = codedeploy.EcsApplication(
             self,
             f"{prefix}DeploymentApplication",
             application_name=f"{prefix}DeploymentApplication",
@@ -200,7 +200,7 @@ class WebStack(Stack):
             self,
             f"{prefix}BlueGreenDeploymentGroup",
             deployment_group_name=f"{prefix}BlueGreenDeploymentGroup",
-            application=app,
+            application=codedeploy_application,
             service=fargate_service.service,
             role=codedeploy_execution_role,
             blue_green_deployment_config=codedeploy.EcsBlueGreenDeploymentConfig(

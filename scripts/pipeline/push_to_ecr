@@ -1,20 +1,24 @@
-#!/bin/sh
+#!/bin/bash
 #
 # This script containerises the web app using Docker, tags it as "latest" and
 # pushes it to ECR for our CodeDeploy job to later source during the blue /
 # green deployment.
 #
-# This will happend even if there are no changes in the web app's source code.
+# This will happen even if there are no changes in the web app's source code.
 #
 
 repo=$1
+
 echo "ECR Repository: "$repo
 
 cd web/ || exit
 
-echo Logging in to Amazon ECR,
+echo Logging in to Amazon ECR
 aws ecr get-login-password | docker login --username AWS --password-stdin "$repo"
 
+echo Build and tag Docker image
 docker build -t web-app .
 docker tag web-app:latest "$repo":latest
+
+echo Running docker push "$repo":latest
 docker push "$repo":latest
