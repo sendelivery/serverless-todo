@@ -53,7 +53,7 @@ class ServerlessTodoPipelineStack(Stack):
                 iam.PolicyStatement(
                     actions=["ssm:GetParameter"],
                     resources=[
-                        f"arn:aws:ssm:{self.account}:{self.region}:parameter/{prefix}ApiEndpoint",
+                        f"arn:aws:ssm:{self.region}:{self.account}:parameter/{prefix}ApiEndpoint",
                     ],
                     effect=iam.Effect.ALLOW,
                 )
