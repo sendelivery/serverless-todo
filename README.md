@@ -1,4 +1,4 @@
-# serverless-todo-app
+# serverless-todo
 
 <p align="center">
   <picture>
