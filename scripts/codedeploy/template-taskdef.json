@@ -21,7 +21,6 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          // TODO: figure something out for consistent and predictable log groups / streams
           "awslogs-create-group": "true",
           "awslogs-group": "APPLICATION-ECS",
           "awslogs-region": "REGION",

@@ -99,6 +99,7 @@ class WebStack(Stack):
         # We'll add the container that will run the web app here, the container image will be the
         # one tagged as "latest" in our ECR repo. This alone, however, is not enough to handle
         # deploying new versions of our image. Hence the deployment group created further down.
+        # TODO don't hardcode the ECR repo
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
 
         # Source the API endpoint at deploy time, not synth time.
