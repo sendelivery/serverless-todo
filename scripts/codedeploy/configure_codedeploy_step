@@ -34,7 +34,8 @@ echo "Task Execution Role Name:" "$task_execution_role_name"
 echo "Task Definition Name:" "$task_definition_name"
 echo "API Endpoint SSM Param Name:" "$api_endpoint_ssm_param"
 
-TodoApiEndpoint="$(aws ssm get-parameter --name "$api_endpoint_ssm_param" --query Parameter.Value)"
+TodoApiEndpoint="$(aws ssm get-parameter --name "$api_endpoint_ssm_param" --query Parameter.Value)" || exit
+TodoApiEndpoint=$(echo "$TodoApiEndpoint" | tr -d '"') # Remove double quotes
 
 echo "TodoApiEndpoint:" "$TodoApiEndpoint"
 
