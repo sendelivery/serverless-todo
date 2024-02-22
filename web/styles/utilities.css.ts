@@ -26,4 +26,25 @@ const lightText = style({
   color: "#666",
 });
 
-export default { heading2Xl, headingXl, headingLg, lightText };
+const centredText = style({
+  textAlign: "center",
+});
+
+const highlightedText = style({
+  color: "#43a047",
+});
+
+const italicText = style({
+  fontStyle: "italic",
+});
+
+const utilStyles = {
+  heading2Xl,
+  headingXl,
+  headingLg,
+  lightText,
+  centredText,
+  highlightedText,
+  italicText,
+};
+export default utilStyles;

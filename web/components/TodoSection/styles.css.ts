@@ -35,7 +35,7 @@ const fillerBlock = style({
 
 const items = style({});
 
-export default {
+const styles = {
   table,
   headingBar,
   firstHeading,
@@ -43,3 +43,4 @@ export default {
   fillerBlock,
   items,
 };
+export default styles;

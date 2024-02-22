@@ -3,13 +3,10 @@ from aws_cdk import RemovalPolicy, Stage
 
 from backend.stateless.stateless_stack import StatelessStack
 from backend.stateful.stateful_stack import StatefulStack
+from backend.web.web_stack import WebStack
 
 
-class ServerlessTodoPipelineStage(Stage):
-    @property
-    def endpoint(self):
-        return self._endpoint
-
+class ServerlessTodoBackendStage(Stage):
     def __init__(
         self,
         scope: Construct,
@@ -20,6 +17,8 @@ class ServerlessTodoPipelineStage(Stage):
     ):
         super().__init__(scope, id, **kwargs)
 
+        # The stateful stack defines our application's storage tier. In this case, just a DynamoDB
+        # table.
         stateful = StatefulStack(
             self,
             f"{prefix}StatefulStack",
@@ -27,6 +26,9 @@ class ServerlessTodoPipelineStage(Stage):
             removal_policy=stateful_removal_policy,
             **kwargs,
         )
+
+        # The stateless stack defines the application tier resources, CRUD Lambdas, and an API
+        # Gateway REST API.
         stateless = StatelessStack(
             self,
             f"{prefix}StatelessStack",
@@ -35,4 +37,13 @@ class ServerlessTodoPipelineStage(Stage):
             **kwargs,
         )
 
-        self._endpoint = stateless.endpoint
+        # The web stage defines the hosting solution for our Next.js web app. An ECS Fargate
+        # cluster fronted by an ALB, we also create a target group used required for the deployment
+        # strategy.
+        WebStack(
+            self,
+            f"{prefix}WebStack",
+            prefix=prefix,
+            todo_endpoint=stateless.endpoint,
+            **kwargs,
+        )

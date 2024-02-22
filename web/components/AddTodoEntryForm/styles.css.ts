@@ -10,6 +10,7 @@ const container = style({
 
 const formContainer = style({
   flex: 1,
+  marginLeft: "0.5rem",
 });
 
 globalStyle(`${formContainer} *`, { fontSize: "medium" });
@@ -17,14 +18,15 @@ globalStyle(`${formContainer} *`, { fontSize: "medium" });
 const form = style({
   display: "flex",
   flexDirection: "row",
-  justifyContent: "center",
+  justifyContent: "space-between",
   alignItems: "center",
   gap: "0.5rem",
 });
 
 const textInput = style({
   height: "1.5rem",
-  width: "85%",
+  width: "100%",
 });
 
-export default { container, form, formContainer, textInput };
+const styles = { container, form, formContainer, textInput };
+export default styles;

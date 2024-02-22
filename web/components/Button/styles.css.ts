@@ -95,4 +95,5 @@ const disabled = style({
   },
 });
 
-export default { simpleButton, unset, plus, cross, dismiss, disabled };
+const styles = { simpleButton, unset, plus, cross, dismiss, disabled };
+export default styles;

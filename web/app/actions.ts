@@ -1,18 +1,30 @@
 "use server";
 
-import {
-  ENTRIES_CACHE_TAG,
-  todoApiEndpoint,
-  todoApiKey,
-} from "@/lib/serverConsts";
+import { ENTRIES_CACHE_TAG, todoApiEndpoint } from "@/lib/serverConsts";
 import { type TodoEntry, type TodoEntryInput } from "@/lib/types";
 import { revalidateTag } from "next/cache";
+
+function validateEndpointIsDefined() {
+  if (!todoApiEndpoint) {
+    throw new Error(
+      "Todo API endpoint is not defined, please check environment variables."
+    );
+  }
+
+  return todoApiEndpoint;
+}
 
 export async function serverPostEntry(formData: FormData) {
   let input = formData.get("description") as string;
   input = input.trim();
 
+  const endpoint = validateEndpointIsDefined();
+
   if (!input) {
+    console.error({
+      message: "Invalid input when creating new todo entry.",
+      input: JSON.stringify(input),
+    });
     throw new Error("Invalid input error");
   }
 
@@ -22,18 +34,21 @@ export async function serverPostEntry(formData: FormData) {
     Completed: false,
   };
 
-  const response = await fetch(todoApiEndpoint, {
+  const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "x-api-key": todoApiKey, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     cache: "no-store", // Not strictly needed as form submission results in hard refresh
     body: JSON.stringify(todoEntryInput),
   });
 
   if (!response.ok) {
+    console.error({
+      message: "Received a non 2XX response when creating new todo entry.",
+      input: JSON.stringify(todoEntryInput),
+      response: JSON.stringify(response),
+    });
     throw new Error("Unable to create new todo entry. Please try again later.");
   }
-
-  revalidateTag(ENTRIES_CACHE_TAG);
 
   const id = await response.text();
   const todoEntry: TodoEntry = {
@@ -41,36 +56,66 @@ export async function serverPostEntry(formData: FormData) {
     Id: id,
   };
 
+  console.info({
+    message: "Successfully created todo entry! Revalidating cache...",
+    todoEntry: JSON.stringify(todoEntry),
+  });
+  revalidateTag(ENTRIES_CACHE_TAG);
+
   return todoEntry;
 }
 
 export async function serverPutEntry(id: string, completed: boolean) {
-  const response = await fetch(todoApiEndpoint, {
+  const endpoint = validateEndpointIsDefined();
+
+  const proposedUpdate = JSON.stringify({ Id: id, Completed: completed });
+
+  const response = await fetch(endpoint, {
     method: "PUT",
-    headers: { "x-api-key": todoApiKey, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     cache: "no-store",
-    body: JSON.stringify({ Id: id, Completed: completed }),
+    body: proposedUpdate,
   });
 
   if (!response.ok) {
-    throw new Error("Unbale to update todo entry. Please try again later.");
+    console.error({
+      message: "Received a non 2XX response when updating a todo entry.",
+      proposedUpdate,
+      response: JSON.stringify(response),
+    });
+    throw new Error("Unable to update todo entry. Please try again later.");
   }
 
+  console.info({
+    message: "Successfully updated todo entry! Revalidating cache...",
+    udpate: proposedUpdate,
+  });
   revalidateTag(ENTRIES_CACHE_TAG);
 }
 
 export async function serverDeleteEntry(id: string) {
+  const endpoint = validateEndpointIsDefined();
+
   // Deletes are fine to be cached, unless something's gone wrong in the UI the
   // user shouldn't be able to resubmit the same delete request.
-  const response = await fetch(todoApiEndpoint, {
+  const response = await fetch(endpoint, {
     method: "DELETE",
-    headers: { "x-api-key": todoApiKey, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ Id: id }),
   });
 
   if (!response.ok) {
+    console.error({
+      message: "Received a non 2XX response when deleting a todo entry.",
+      id,
+      response: JSON.stringify(response),
+    });
     throw new Error("Unable to delete todo entry. Please try again later.");
   }
 
+  console.info({
+    message: "Successfully deleted todo entry! Revalidating cache...",
+    itemDeleted: id,
+  });
   revalidateTag(ENTRIES_CACHE_TAG);
 }

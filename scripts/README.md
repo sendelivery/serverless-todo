@@ -1,0 +1,12 @@
+## Scripts
+
+Within this directory is a collection of utlity scripts written either for developer covenience, or for use by the CICD pipeline. The table below describes usages for each script that can be found.
+
+| Script                                                                             | Usage Notes                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`./deploy_ephemeral`](./deploy_ephemeral)                                         | A utility script to be used by the developer when working on new features. This script will deploy all application stacks (ignoring the pipeline), using the current git branch as a prefix for resource names and IDs. <br> Usage: `./scripts/deploy_ephemeral` |
+| [`./pipeline/synth`](./pipeline/synth)                                             | **Used by the pipeline** at synthesize time to generate the Cloud Assembly file set.                                                                                                                                                                             |
+| [`./pipeline/push_to_ecr`](./pipeline/push_to_ecr)                                 | **Used by the pipeline** to build a docker image of the project's web app and push it to the passed in ECR repository.                                                                                                                                           |
+| [`./codedeploy/configure_codedeploy_step`](./codedeploy/configure_codedeploy_step) | **Used by the pipeline** to generate the necessary ECS `taskdef.json` and CodeDeploy `appspec.json` files in preparation for a Blue / Green deployment of our containerised web app.                                                                             |
+
+Note, all scripts have been written while referencing the [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html), however ShellCheck has overriden some of the suggestion made there.

@@ -105,7 +105,7 @@ globalStyle(`${container} > ${messageContainer} > p`, {
   marginLeft: 7,
 });
 
-export default {
+const styles = {
   fadeIn,
   fadeOut,
   container,
@@ -116,3 +116,4 @@ export default {
   infoIcon,
   messageContainer,
 };
+export default styles;

@@ -54,4 +54,5 @@ const styledCheckbox = style({
   },
 });
 
-export default { label, checkbox, styledCheckbox };
+const styles = { label, checkbox, styledCheckbox };
+export default styles;

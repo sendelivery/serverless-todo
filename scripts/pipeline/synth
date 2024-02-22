@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# The required commands to produce the CDK Cloud Assembly file set.
+# Grouped into a script for convenience, this should only be run by the remote
+# pipeline.
+
+npm install -g aws-cdk
+pip install -r requirements.txt
+# TODO pytest tests
+cdk synth
+
+# We need to expose the CodeDeploy script and templates as an artifact in our
+# pipeline so we can run our custom blue / green deployment step at the end of
+# the pipeline. Copying them into the Cloud Assembly file set is the simplest
+# way to do so.
+cp -r ./scripts/codedeploy cdk.out

@@ -1,22 +1,25 @@
-import {
-  ENTRIES_CACHE_TAG,
-  todoApiEndpoint,
-  todoApiKey,
-} from "@/lib/serverConsts";
+import { ENTRIES_CACHE_TAG, todoApiEndpoint } from "@/lib/serverConsts";
 import { type TodoEntry } from "@/lib/types";
 import ToastQueueProvider from "@/components/ToastQueueProvider";
 import TodoSection from "@/components/TodoSection";
 
 export default async function Page() {
-  const response = await fetch(todoApiEndpoint, {
-    headers: {
-      "x-api-key": todoApiKey,
-    },
-    next: { tags: [ENTRIES_CACHE_TAG] },
-  });
-  const entries: TodoEntry[] = await response.json();
+  let entries: TodoEntry[] = [];
 
-  // TODO: Error Boundary here?
+  if (todoApiEndpoint) {
+    const response = await fetch(todoApiEndpoint, {
+      next: {
+        // tags: [ENTRIES_CACHE_TAG],
+        revalidate: 0,
+      },
+    });
+
+    entries = await response.json();
+  } else {
+    console.warn(
+      "API endpoint and or key are undefined, please ensure environment variables are correctly set."
+    );
+  }
 
   return (
     <ToastQueueProvider>

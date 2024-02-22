@@ -1,0 +1,37 @@
+{
+  "executionRoleArn": "TASK_EXEC_ROLE",
+  "containerDefinitions": [
+    {
+      "essential": true,
+      "image": "<IMAGE_PLACEHOLDER>",
+      "name": "CONTAINER_NAME",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "TODO_API_ENDPOINT",
+          "value": "TODO_API_ENDPOINT_VALUE"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-create-group": "true",
+          "awslogs-group": "APPLICATION-ECS",
+          "awslogs-region": "REGION",
+          "awslogs-stream-prefix": "STREAM_PREFIX"
+        }
+      }
+    }
+  ],
+  "cpu": "256",
+  "family": "TASK_DEF",
+  "memory": "512",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"]
+}
