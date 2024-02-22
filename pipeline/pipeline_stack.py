@@ -27,7 +27,7 @@ class ServerlessTodoPipelineStack(Stack):
                 input=pipelines.CodePipelineSource.git_hub(
                     # TODO move these into environment variables
                     "sendelivery/serverless-todo-app",
-                    "feature/fargate-web-app",
+                    "main",
                 ),
                 commands=[
                     "chmod a+x ./scripts/pipeline/synth",
