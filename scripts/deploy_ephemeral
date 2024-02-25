@@ -57,6 +57,7 @@ echo -e "Using prefix: ${CYAN}$PREFIX${NC}"
 # appropriately name the stacks we want to deploy. We'll also pass in any
 # additional CLI arguments using $@.
 cdk deploy \
+  "${PREFIX}Stage/${PREFIX}NetworkingStack" \
   "${PREFIX}Stage/${PREFIX}StatefulStack" \
   "${PREFIX}Stage/${PREFIX}StatelessStack" \
   -c ephemeral_prefix="$PREFIX" \

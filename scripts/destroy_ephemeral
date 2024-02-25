@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cdk destroy \
+  "feature-private-resources-TodoStage/feature-private-resources-TodoNetworkingStack" \
+  "feature-private-resources-TodoStage/feature-private-resources-TodoStatefulStack" \
+  "feature-private-resources-TodoStage/feature-private-resources-TodoStatelessStack" \
+  -c ephemeral_prefix=feature-private-resources-Todo \
+  "$@"
