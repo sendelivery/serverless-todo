@@ -1,4 +1,4 @@
-from aws_cdk.aws_apigateway import RestApi
+from aws_cdk.aws_apigateway import IRestApi
 from aws_cdk import (
     Duration,
     Stack,
@@ -14,7 +14,6 @@ from constructs import Construct
 
 # This stack holds all the resources related to hosting our web app for public access. The solution
 # consists of:
-#   - A VPC with 2 AZs and an ECS Cluster wired up to that VPC.
 #   - An ECS Fargate task definition and container that will be launched in our cluster.
 #   - An L3 construct `ApplicationLoadBalancedFargateService` that provisions an ALB, handles
 #     deploying our initial container with a desired count of 1, and routes traffic accordingly.
@@ -30,7 +29,7 @@ class WebStack(Stack):
         scope: Construct,
         construct_id: str,
         prefix: str,
-        api: RestApi,
+        api: IRestApi,
         vpc: ec2.IVpc,
         **kwargs,
     ) -> None:
@@ -150,7 +149,7 @@ class WebStack(Stack):
         green_target_group = elb.ApplicationTargetGroup(
             self,
             f"{prefix}GreenTargetGroup",
-            target_group_name=f"{prefix}GreenTargetGroup",
+            target_group_name=f"{prefix}GreenTG",
             protocol=elb.ApplicationProtocol.HTTP,
             target_type=elb.TargetType.IP,
             vpc=vpc,

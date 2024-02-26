@@ -1,21 +1,20 @@
 #!/bin/bash
 #
-# Perform a deployment of all application stacks (excludes the pipeline) to an
-# ephemeral environment, using the current git branch as the namespace.
+# Perform a deployment of all application stacks (excludes the pipeline and
+# web stack) to an ephemeral environment, using the current git branch as the
+# namespace.
 
 readonly CYAN="\033[0;36m"
 readonly RED="\033[0;31m"
-readonly NC="\033[0m"
-
-echo "Deploying ephemeral environment to default CLI AWS account and region"
+readonly NO_COLOUR="\033[0m"
 
 branch_name="$(git symbolic-ref HEAD 2>/dev/null)" ||
   branch_name="(unnamed branch)" # detached HEAD
 
 [[ -z "$branch_name" ]] && {
   echo -e \
-    "${RED}Error: ${NC}" \
-    "Attempting to deploy with detached head, this is a problems because we" \
+    "${RED}Error: ${NO_COLOUR}" \
+    "Attempting to deploy with detached head, this is a problem because we" \
     "need a branch name to differentiate ephemeral resources." \
     "\nPlease create a feature branch and try again."
   exit 1
@@ -25,12 +24,12 @@ branch_name=${branch_name##refs/heads/}
 
 if [ "$branch_name" == "main" ]; then
   echo -e \
-    "${RED}Error: ${NC}" \
+    "${RED}Error: ${NO_COLOUR}" \
     "Attempting to deploy via the main branch, this should only be done" \
     "using the CICD pipeline." \
     "\nIf you wish to deploy an ephemeral environment that mirrors" \
     "production, please create a feature branch first." \
-    "\nSee the release strategy doc for more info."
+    "\n${CYAN}See the release strategy doc for more info.${NO_COLOUR}"
   exit 1
 fi
 
@@ -48,10 +47,11 @@ clean_string() {
   echo "$converted"
 }
 
-PREFIX=$(clean_string "$branch_name")-Todo
+PREFIX=$(clean_string "$branch_name")
+PREFIX="${PREFIX:0:24}-"
 readonly PREFIX
 
-echo -e "Using prefix: ${CYAN}$PREFIX${NC}"
+echo -e "Using prefix: ${CYAN}$PREFIX${NO_COLOUR}"
 
 # Now we can run cdk deploy, passing in our prefix as context which will
 # appropriately name the stacks we want to deploy. We'll also pass in any
@@ -67,7 +67,7 @@ deploy_status=$?
 # Check if the deployment failed (non-zero exit code)
 if [ $deploy_status -ne 0 ]; then
   echo -e \
-    "\n${RED}Error: ${NC}" \
+    "\n${RED}Error: ${NO_COLOUR}" \
     "deploy_ephemeral failed with exit code $deploy_status." \
     "\nSee CDK output above for more information."
   exit $deploy_status
@@ -75,6 +75,6 @@ fi
 
 echo -e \
   "${RED}Please remember to tear down ephemeral environment stacks when" \
-  "you are done using them!${NC}"
+  "you are done using them!${NO_COLOUR}"
 
 exit 0

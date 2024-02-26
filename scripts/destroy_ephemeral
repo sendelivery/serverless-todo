@@ -1,8 +1,79 @@
 #!/bin/bash
+#
+# Destroy all application stacks (excludes the pipeline and web stack) to an
+# ephemeral environment, using the current git branch as the namespace.
 
+readonly CYAN="\033[0;36m"
+readonly RED="\033[0;31m"
+readonly NO_COLOUR="\033[0m"
+
+branch_name="$(git symbolic-ref HEAD 2>/dev/null)" ||
+  branch_name="(unnamed branch)" # detached HEAD
+
+[[ -z "$branch_name" ]] && {
+  echo -e \
+    "${RED}Error: ${NO_COLOUR}" \
+    "Attempting to destroy ephemeral stacks with detached head, this is a" \
+    "problem because we need a branch name to differentiate ephemeral" \
+    "ephemeral resources." \
+    "\nPlease create a feature branch and try again."
+  exit 1
+}
+
+branch_name=${branch_name##refs/heads/}
+
+if [ "$branch_name" == "main" ]; then
+  echo -e \
+    "${RED}Error: ${NO_COLOUR}" \
+    "Attempting to destroy ephemeral stacks while on the main branch, this " \
+    "is not supported." \
+    "Please checkout a feature branch that has corresponding ephemeral" \
+    "stacks already deployed." \
+    "\n${CYAN}See the release strategy doc for more info.${NO_COLOUR}"
+  exit 1
+fi
+
+#######################################
+# Remove any unsupported special characters and return a new string.
+# Arguments:
+#   The string to clean.
+#######################################
+clean_string() {
+  input="$1"
+  # Replace special characters with underscores
+  converted=$(echo "$input" | tr -cs '[:alnum:]_-' '-')
+  # Remove leading and trailing underscores
+  converted=$(echo "$converted" | sed -e 's/^-//' -e 's/-$//')
+  echo "$converted"
+}
+
+PREFIX=$(clean_string "$branch_name")
+PREFIX="${PREFIX:0:24}-"
+readonly PREFIX
+
+echo -e "Using prefix: ${CYAN}$PREFIX${NO_COLOUR}"
+
+# Now we can run cdk deploy, passing in our prefix as context which will
+# appropriately name the stacks we want to deploy. We'll also pass in any
+# additional CLI arguments using $@.
 cdk destroy \
-  "feature-private-resources-TodoStage/feature-private-resources-TodoNetworkingStack" \
-  "feature-private-resources-TodoStage/feature-private-resources-TodoStatefulStack" \
-  "feature-private-resources-TodoStage/feature-private-resources-TodoStatelessStack" \
-  -c ephemeral_prefix=feature-private-resources-Todo \
+  "${PREFIX}Stage/${PREFIX}NetworkingStack" \
+  "${PREFIX}Stage/${PREFIX}StatefulStack" \
+  "${PREFIX}Stage/${PREFIX}StatelessStack" \
+  -c ephemeral_prefix="${PREFIX}" \
   "$@"
+destroy_status=$?
+
+# Check if the destroy command failed (non-zero exit code)
+if [ $destroy_status -ne 0 ]; then
+  echo -e \
+    "\n${RED}Error: ${NO_COLOUR}" \
+    "destroy_ephemeral failed with exit code $destroy_status." \
+    "\nSee CDK output above for more information."
+  exit $destroy_status
+fi
+
+echo -e \
+  "${CYAN}Successfully destroyed ephemeral stacks!${NO_COLOUR}"
+
+exit 0

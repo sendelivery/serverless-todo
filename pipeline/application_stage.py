@@ -44,8 +44,7 @@ class ApplicationStage(Stage):
             **kwargs,
         )
 
-        # The stateless stack defines the application tier resources, CRUD Lambdas, and an API
-        # Gateway REST API.
+        # The stateless stack defines the CRUD Lambdas, and a private API Gateway REST API.
         self._stateless = StatelessStack(
             self,
             f"{prefix}StatelessStack",
@@ -56,8 +55,8 @@ class ApplicationStage(Stage):
             **kwargs,
         )
 
-        # The web stage defines the hosting solution for our Next.js web app. An ECS Fargate
-        # cluster fronted by an ALB, we also create a target group used required for the deployment
+        # The web stack defines the hosting solution for our Next.js web app. An ECS Fargate
+        # cluster fronted by an ALB, we also create the resources required for the deployment
         # strategy.
         self._web_stack = WebStack(
             self,

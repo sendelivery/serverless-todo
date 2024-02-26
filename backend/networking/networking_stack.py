@@ -23,11 +23,10 @@ class NetworkingStack(Stack):
     def __init__(self, scope: Construct, id: str, prefix: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        # TODO - outdated comment
-        # We'll create a VPC with the default subnet configuration, the public subnets will be
-        # used by our Fargate cluster, and the private ones by our backend Lambdas and API Gateway.
-        # 2 AZs is the minimum required for a LB to work with our Fargate cluster, so we'll just
-        # stick with that.
+        # We'll create a VPC with the specified subnet configuration, the public subnets will be
+        # used by our Fargate cluster, the isolated ones by our backend Lambdas and API Gateway.
+        # 2 AZs is the minimum required for a LB to work with our Fargate cluster, so we'll stick
+        # with that.
         self._vpc = ec2.Vpc(
             self,
             f"{prefix}Vpc",
@@ -47,6 +46,7 @@ class NetworkingStack(Stack):
             ],
         )
 
+        # This is the security group we'll associate with our VPC interface endpoint.
         security_group = ec2.SecurityGroup(
             self,
             f"{prefix}VpcSecurityGroup",
@@ -55,12 +55,16 @@ class NetworkingStack(Stack):
             security_group_name=f"{prefix}VpcSecurityGroup",
         )
 
+        # Any resource deployed in one of the public subnets in our VPC will be able to send secure
+        # traffic to our VPC interface endpoint.
         security_group.add_ingress_rule(
             ec2.Peer.any_ipv4(),
             ec2.Port.tcp(443),
-            "HTTPS from anywhere",
+            "Allow TCP from anywhere.",
         )
 
+        # This VPC interface endpoint will be used to secure our REST API and simulatneously allow
+        # the web app that will be deployed in our public subnets to access the private REST API.
         self._vpc_interface_endpoint = self._vpc.add_interface_endpoint(
             f"{prefix}VpcInterfaceEndpointForApi",
             service=ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
@@ -68,6 +72,8 @@ class NetworkingStack(Stack):
             security_groups=[security_group],
         )
 
+        # This VPC gateway endpoint is required to allow the Lambdas housed in our private subnet
+        # to access the DynamoDB table defined in our stateful stack.
         self._vpc.add_gateway_endpoint(
             f"{prefix}VpcGatewayEndpointForEntriesTable",
             service=ec2.GatewayVpcEndpointAwsService.DYNAMODB,
