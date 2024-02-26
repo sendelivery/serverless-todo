@@ -14,11 +14,11 @@ class NetworkingStack(Stack):
         return self._vpc
 
     @property
-    def vpc_endpoint(self):
+    def vpc_interface_endpoint(self):
         """
         VPC endpoint
         """
-        return self._vpc_endpoint
+        return self._vpc_interface_endpoint
 
     def __init__(self, scope: Construct, id: str, prefix: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
@@ -61,7 +61,7 @@ class NetworkingStack(Stack):
             "HTTPS from anywhere",
         )
 
-        self._vpc_endpoint = self._vpc.add_interface_endpoint(
+        self._vpc_interface_endpoint = self._vpc.add_interface_endpoint(
             f"{prefix}VpcInterfaceEndpointForApi",
             service=ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
             subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),

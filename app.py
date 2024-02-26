@@ -7,7 +7,7 @@ from aws_cdk import (
 )
 from pipeline.pipeline_stack import (
     ServerlessTodoPipelineStack,
-    ServerlessTodoBackendStage,
+    ApplicationStage,
 )
 
 app = App()
@@ -25,7 +25,7 @@ ServerlessTodoPipelineStack(
 # deploy_ephemeral script. It will only synthesize if we supply the required context.
 prefix = app.node.try_get_context("ephemeral_prefix")
 if prefix:
-    ServerlessTodoBackendStage(
+    ApplicationStage(
         app,
         f"{prefix}Stage",
         prefix=prefix,

@@ -1,12 +1,21 @@
 from constructs import Construct
 from aws_cdk import RemovalPolicy, Stage
 
-from backend.stateless.stateless_stack import StatelessStack
-from backend.stateful.stateful_stack import StatefulStack
-from backend.web.web_stack import WebStack
+from backend.networking import NetworkingStack
+from backend.stateless import StatelessStack
+from backend.stateful import StatefulStack
+from backend.web import WebStack
 
 
-class ServerlessTodoBackendStage(Stage):
+class ApplicationStage(Stage):
+    @property
+    def stateful_stack(self):
+        return self._stateful_stack
+
+    @property
+    def web_stack(self):
+        return self._web_stack
+
     def __init__(
         self,
         scope: Construct,
@@ -17,9 +26,17 @@ class ServerlessTodoBackendStage(Stage):
     ):
         super().__init__(scope, id, **kwargs)
 
+        # The networking stack defines the VPC, subnets, and VPC endpoints that will be used
+        # throughout.
+        networking = NetworkingStack(
+            self,
+            f"{prefix}NetworkingStack",
+            prefix=prefix,
+        )
+
         # The stateful stack defines our application's storage tier. In this case, just a DynamoDB
         # table.
-        stateful = StatefulStack(
+        self._stateful_stack = StatefulStack(
             self,
             f"{prefix}StatefulStack",
             prefix=prefix,
@@ -29,21 +46,22 @@ class ServerlessTodoBackendStage(Stage):
 
         # The stateless stack defines the application tier resources, CRUD Lambdas, and an API
         # Gateway REST API.
-        stateless = StatelessStack(
+        StatelessStack(
             self,
             f"{prefix}StatelessStack",
             prefix=prefix,
-            entries_table=stateful.entries_table,
+            entries_table=self.stateful_stack.entries_table,
+            vpc=networking.vpc,
+            vpc_endpoint=networking.vpc_interface_endpoint,
             **kwargs,
         )
 
         # The web stage defines the hosting solution for our Next.js web app. An ECS Fargate
         # cluster fronted by an ALB, we also create a target group used required for the deployment
         # strategy.
-        WebStack(
+        self._web_stack = WebStack(
             self,
             f"{prefix}WebStack",
             prefix=prefix,
-            todo_endpoint=stateless.endpoint,
             **kwargs,
         )

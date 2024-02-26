@@ -7,16 +7,13 @@ from aws_cdk import (
 )
 
 from .lib.bluegreen_deployment_step import BlueGreenDeploymentStep
-
-from .backend_stage import ServerlessTodoBackendStage
-from .web_stage import ServerlessTodoWebStage
+from .application_stage import ApplicationStage
 
 
 class ServerlessTodoPipelineStack(Stack):
     def __init__(self, scope: Construct, id: str, prefix: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        ############################ PIPELINE START ############################
         pipeline = pipelines.CodePipeline(
             self,
             f"{prefix}Pipeline",
@@ -26,8 +23,8 @@ class ServerlessTodoPipelineStack(Stack):
                 "Synth",
                 input=pipelines.CodePipelineSource.git_hub(
                     # TODO move these into environment variables
-                    "sendelivery/serverless-todo-app",
-                    "main",
+                    "sendelivery/serverless-todo",
+                    "feature/private-resources",
                 ),
                 commands=[
                     "chmod a+x ./scripts/pipeline/synth",
@@ -35,16 +32,43 @@ class ServerlessTodoPipelineStack(Stack):
                 ],
             ),
         )
-        ############################ PIPELINE END ############################
 
-        ############################ APPLICATION / STORAGE START ############################
-        backend = ServerlessTodoBackendStage(
-            self, f"{prefix}BackendStage", prefix=prefix, **kwargs
+        ############################ APPLICATION ############################
+
+        application = ApplicationStage(
+            self, f"{prefix}ApplicationStage", prefix=prefix, **kwargs
         )
-        pipeline.add_stage(backend)
-        ############################ APPLICATION / STORAGE END ############################
 
-        ############################ WEB START ############################
+        # TODO ECR repo should be created in the stateful stack.
+        container_repository = f"{self.account}.dkr.ecr.{self.region}.amazonaws.com/serverless-todo-web-app"
+
+        # This step uses the pipeline's source file set by default (i.e. GitHub),
+        # meaning we don't have to copy the web directory in the pipeline's synth step
+        # like we do the scripts directory.
+        build_and_deploy_docker_image_step = pipelines.CodeBuildStep(
+            f"{prefix}BuildAndUploadDockerImage",
+            commands=[
+                "chmod a+x ./scripts/pipeline/push_to_ecr",
+                f"./scripts/pipeline/push_to_ecr {container_repository}",
+            ],
+            role_policy_statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:CompleteLayerUpload",
+                        "ecr:GetAuthorizationToken",
+                        "ecr:InitiateLayerUpload",
+                        "ecr:PutImage",
+                        "ecr:UploadLayerPart",
+                        "ecr:BatchGetImage",
+                        "ecr:GetDownloadUrlForLayer",
+                    ],
+                    resources=["*"],
+                    effect=iam.Effect.ALLOW,
+                )
+            ],
+        )
+
         configure_codedeploy_step = pipelines.CodeBuildStep(
             "ConfigureBlueGreenDeployment",
             input=pipeline.cloud_assembly_file_set,
@@ -104,44 +128,18 @@ class ServerlessTodoPipelineStack(Stack):
         # definition and app spec files - i.e. the ouptput of our configure_codedeploy_step script.
         deploy_step.add_step_dependency(configure_codedeploy_step)
 
-        # TODO ECR repo should be created in the stateful stack.
-        container_repository = f"{self.account}.dkr.ecr.{self.region}.amazonaws.com/serverless-todo-web-app"
-
         pipeline.add_stage(
-            ServerlessTodoWebStage(
-                self,
-                f"{prefix}WebStage",
-                prefix=prefix,
-                **kwargs,
-            ),
-            pre=[
-                # This step uses the pipeline's source file set by default (i.e. GitHub),
-                # meaning we don't have to copy the web directory in the pipeline's synth step
-                # like we do the scripts directory.
-                pipelines.CodeBuildStep(
-                    f"{prefix}BuildAndUploadDockerImage",
-                    commands=[
-                        "chmod a+x ./scripts/pipeline/push_to_ecr",
-                        f"./scripts/pipeline/push_to_ecr {container_repository}",
-                    ],
-                    role_policy_statements=[
-                        iam.PolicyStatement(
-                            actions=[
-                                "ecr:BatchCheckLayerAvailability",
-                                "ecr:CompleteLayerUpload",
-                                "ecr:GetAuthorizationToken",
-                                "ecr:InitiateLayerUpload",
-                                "ecr:PutImage",
-                                "ecr:UploadLayerPart",
-                                "ecr:BatchGetImage",
-                                "ecr:GetDownloadUrlForLayer",
-                            ],
-                            resources=["*"],
-                            effect=iam.Effect.ALLOW,
-                        )
-                    ],
-                )
+            application,
+            stack_steps=[
+                pipelines.StackSteps(
+                    stack=application.stateful_stack,
+                    post=[build_and_deploy_docker_image_step],
+                ),
+                pipelines.StackSteps(
+                    stack=application.web_stack,
+                    post=[configure_codedeploy_step, deploy_step],
+                ),
             ],
-            post=[configure_codedeploy_step, deploy_step],
         )
-        ############################ WEB END ############################
+
+        ############################ APPLICATION ############################

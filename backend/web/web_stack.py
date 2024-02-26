@@ -125,18 +125,17 @@ class WebStack(Stack):
         )
 
         # The ALB fronting our cluster will be internet-facing and be assigned a public IP so that
-        # traffic can reach it via the public internet.
-        # TODO does assign_public_ip need to be True?
+        # traffic from the open internet can reach it.
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             f"{prefix}ALBFargateService",
             load_balancer_name=f"{prefix}Alb",
             service_name=f"{prefix}FargateService",
-            cluster=cluster,
+            cluster=cluster,  # VPC is taken from the cluster
             task_definition=task_definition,
             desired_count=1,
             listener_port=80,
-            assign_public_ip=True,
+            assign_public_ip=True,  # places our containers in our VPC's public subnets by default
             public_load_balancer=True,
             deployment_controller=ecs.DeploymentController(
                 type=ecs.DeploymentControllerType.CODE_DEPLOY
