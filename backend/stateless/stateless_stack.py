@@ -1,5 +1,5 @@
 from constructs import Construct
-from aws_cdk.aws_dynamodb import Table
+from aws_cdk.aws_dynamodb import ITable
 from aws_cdk.aws_ec2 import IVpc, IVpcEndpoint
 from aws_cdk import (
     Stack,
@@ -18,15 +18,15 @@ from aws_cdk import (
 
 class StatelessStack(Stack):
     @property
-    def api_endpoint(self):
-        return self._api_endpoint
+    def api(self):
+        return self._api
 
     def __init__(
         self,
         scope: Construct,
         construct_id: str,
         prefix: str,
-        entries_table: Table,
+        entries_table: ITable,
         vpc: IVpc,
         vpc_endpoint: IVpcEndpoint,
         **kwargs,
@@ -58,7 +58,7 @@ class StatelessStack(Stack):
         )
 
         # Define the REST API - deploy "latestDeployment" by default
-        api = apigw.RestApi(
+        self._api = apigw.RestApi(
             self,
             f"{prefix}ApiDeploymentStage",
             rest_api_name=f"{prefix}Api",
@@ -69,7 +69,7 @@ class StatelessStack(Stack):
             ),
             policy=api_resource_policy,
         )
-        entries_resource = api.root.add_resource("entries")
+        entries_resource = self._api.root.add_resource("entries")
 
         # Next, we'll create Lambda integrations for our supported HTTP methods.
 
@@ -196,7 +196,7 @@ class StatelessStack(Stack):
             f"{prefix}ApiGWInvokeGetEntriesPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
-            source_arn=api.arn_for_execute_api(
+            source_arn=self._api.arn_for_execute_api(
                 method=entries_get_method.http_method, path=entries_resource.path
             ),
         )
@@ -206,7 +206,7 @@ class StatelessStack(Stack):
             f"{prefix}ApiGWInvokeUpsertEntriesPOSTPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
-            source_arn=api.arn_for_execute_api(
+            source_arn=self._api.arn_for_execute_api(
                 method=entries_post_method.http_method, path=entries_resource.path
             ),
         )
@@ -214,7 +214,7 @@ class StatelessStack(Stack):
             f"{prefix}ApiGWInvokeUpsertEntriesPUTPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
-            source_arn=api.arn_for_execute_api(
+            source_arn=self._api.arn_for_execute_api(
                 method=entries_put_method.http_method, path=entries_resource.path
             ),
         )
@@ -224,7 +224,7 @@ class StatelessStack(Stack):
             f"{prefix}ApiGWInvokeDeleteEntriesPermission",
             principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
             action="lambda:InvokeFunction",
-            source_arn=api.arn_for_execute_api(
+            source_arn=self._api.arn_for_execute_api(
                 method=entries_delete_method.http_method, path=entries_resource.path
             ),
         )
@@ -237,12 +237,12 @@ class StatelessStack(Stack):
             self,
             f"{prefix}ApiEndpoint",
             parameter_name=f"{prefix}ApiEndpoint",
-            string_value=api.url,
+            string_value=self._api.url,
         )
 
-        self._api_endpoint = CfnOutput(
-            self,
-            f"{prefix}ApiEndpointCfnOutput",
-            export_name=f"{prefix}ApiEndpointCfnOutput",
-            value=api.url,
-        )
+        # self._api_endpoint = CfnOutput(
+        #     self,
+        #     f"{prefix}ApiEndpointCfnOutput",
+        #     export_name=f"{prefix}ApiEndpointCfnOutput",
+        #     value=api.url,
+        # )

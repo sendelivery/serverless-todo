@@ -63,6 +63,6 @@ class ApplicationStage(Stage):
             self,
             f"{prefix}WebStack",
             prefix=prefix,
-            api_endpoint=self._stateless_stack.api_endpoint,
+            api=self._stateless_stack.api,
             **kwargs,
         )

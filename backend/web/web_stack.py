@@ -1,3 +1,4 @@
+from aws_cdk.aws_apigateway import RestApi
 from aws_cdk import (
     CfnOutput,
     Duration,
@@ -31,7 +32,7 @@ class WebStack(Stack):
         scope: Construct,
         construct_id: str,
         prefix: str,
-        api_endpoint: CfnOutput,
+        api: RestApi,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -113,7 +114,7 @@ class WebStack(Stack):
             f"{prefix}Container",
             container_name=f"{prefix}Container",
             image=ecs.ContainerImage.from_registry(base_image),
-            environment={"TODO_API_ENDPOINT": api_endpoint.import_value},
+            environment={"TODO_API_ENDPOINT": api.url},
             memory_limit_mib=512,
             cpu=256,
             # https://stackoverflow.com/questions/55702196/essential-container-in-task-exited
