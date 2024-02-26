@@ -10,7 +10,7 @@ from backend.web import WebStack
 class ApplicationStage(Stage):
     @property
     def stateful_stack(self):
-        return self._stateful_stack
+        return self._stateful
 
     @property
     def web_stack(self):
@@ -28,7 +28,7 @@ class ApplicationStage(Stage):
 
         # The networking stack defines the VPC, subnets, and VPC endpoints that will be used
         # throughout.
-        networking = NetworkingStack(
+        self._networking = NetworkingStack(
             self,
             f"{prefix}NetworkingStack",
             prefix=prefix,
@@ -36,7 +36,7 @@ class ApplicationStage(Stage):
 
         # The stateful stack defines our application's storage tier. In this case, just a DynamoDB
         # table.
-        self._stateful_stack = StatefulStack(
+        self._stateful = StatefulStack(
             self,
             f"{prefix}StatefulStack",
             prefix=prefix,
@@ -46,13 +46,13 @@ class ApplicationStage(Stage):
 
         # The stateless stack defines the application tier resources, CRUD Lambdas, and an API
         # Gateway REST API.
-        self._stateless_stack = StatelessStack(
+        self._stateless = StatelessStack(
             self,
             f"{prefix}StatelessStack",
             prefix=prefix,
             entries_table=self.stateful_stack.entries_table,
-            vpc=networking.vpc,
-            vpc_endpoint=networking.vpc_interface_endpoint,
+            vpc=self._networking.vpc,
+            vpc_endpoint=self._networking.vpc_interface_endpoint,
             **kwargs,
         )
 
@@ -63,6 +63,7 @@ class ApplicationStage(Stage):
             self,
             f"{prefix}WebStack",
             prefix=prefix,
-            api=self._stateless_stack.api,
+            api=self._stateless.api,
+            vpc=self._networking.vpc,
             **kwargs,
         )

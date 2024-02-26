@@ -133,6 +133,7 @@ class ServerlessTodoPipelineStack(Stack):
             stack_steps=[
                 pipelines.StackSteps(
                     stack=application.web_stack,
+                    # TODO change image step to pre step of stateless or post of stateful?
                     pre=[build_and_deploy_docker_image_step],
                     post=[configure_codedeploy_step, deploy_step],
                 ),

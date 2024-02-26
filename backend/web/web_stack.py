@@ -1,6 +1,5 @@
 from aws_cdk.aws_apigateway import RestApi
 from aws_cdk import (
-    CfnOutput,
     Duration,
     Stack,
     aws_ec2 as ec2,
@@ -9,7 +8,6 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_codedeploy as codedeploy,
     aws_elasticloadbalancingv2 as elb,
-    aws_ssm as ssm,
 )
 from constructs import Construct
 
@@ -33,13 +31,10 @@ class WebStack(Stack):
         construct_id: str,
         prefix: str,
         api: RestApi,
+        vpc: ec2.IVpc,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
-
-        # TODO move any networking related resources into a "networking" stack and expose resources
-        # via CfnOutputs.
-        vpc = ec2.Vpc(self, f"{prefix}Vpc", max_azs=2)
 
         cluster = ecs.Cluster(
             self,
@@ -104,11 +99,6 @@ class WebStack(Stack):
         # deploying new versions of our image. Hence the deployment group created further down.
         # TODO don't hardcode the ECR repo
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
-
-        # Source the API endpoint at deploy time, not synth time.
-        # todo_endpoint = ssm.StringParameter.value_for_string_parameter(
-        #     self, f"{prefix}ApiEndpoint"
-        # )
 
         task_definition.add_container(
             f"{prefix}Container",
