@@ -1,3 +1,4 @@
+from aws_cdk.aws_apigateway import IRestApi
 from aws_cdk import (
     Duration,
     Stack,
@@ -7,14 +8,12 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_codedeploy as codedeploy,
     aws_elasticloadbalancingv2 as elb,
-    aws_ssm as ssm,
 )
 from constructs import Construct
 
 
 # This stack holds all the resources related to hosting our web app for public access. The solution
 # consists of:
-#   - A VPC with 2 AZs and an ECS Cluster wired up to that VPC.
 #   - An ECS Fargate task definition and container that will be launched in our cluster.
 #   - An L3 construct `ApplicationLoadBalancedFargateService` that provisions an ALB, handles
 #     deploying our initial container with a desired count of 1, and routes traffic accordingly.
@@ -30,13 +29,11 @@ class WebStack(Stack):
         scope: Construct,
         construct_id: str,
         prefix: str,
+        api: IRestApi,
+        vpc: ec2.IVpc,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
-
-        # TODO move any networking related resources into a "networking" stack and expose resources
-        # via CfnOutputs.
-        vpc = ec2.Vpc(self, f"{prefix}Vpc", max_azs=2)
 
         cluster = ecs.Cluster(
             self,
@@ -102,16 +99,11 @@ class WebStack(Stack):
         # TODO don't hardcode the ECR repo
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
 
-        # Source the API endpoint at deploy time, not synth time.
-        todo_endpoint = ssm.StringParameter.value_for_string_parameter(
-            self, f"{prefix}ApiEndpoint"
-        )
-
         task_definition.add_container(
             f"{prefix}Container",
             container_name=f"{prefix}Container",
             image=ecs.ContainerImage.from_registry(base_image),
-            environment={"TODO_API_ENDPOINT": todo_endpoint},
+            environment={"TODO_API_ENDPOINT": api.url},
             memory_limit_mib=512,
             cpu=256,
             # https://stackoverflow.com/questions/55702196/essential-container-in-task-exited
@@ -125,18 +117,17 @@ class WebStack(Stack):
         )
 
         # The ALB fronting our cluster will be internet-facing and be assigned a public IP so that
-        # traffic can reach it via the public internet.
-        # TODO does assign_public_ip need to be True?
+        # traffic from the open internet can reach it.
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             f"{prefix}ALBFargateService",
             load_balancer_name=f"{prefix}Alb",
             service_name=f"{prefix}FargateService",
-            cluster=cluster,
+            cluster=cluster,  # VPC is taken from the cluster
             task_definition=task_definition,
             desired_count=1,
             listener_port=80,
-            assign_public_ip=True,
+            assign_public_ip=True,  # places our containers in our VPC's public subnets by default
             public_load_balancer=True,
             deployment_controller=ecs.DeploymentController(
                 type=ecs.DeploymentControllerType.CODE_DEPLOY
@@ -158,7 +149,7 @@ class WebStack(Stack):
         green_target_group = elb.ApplicationTargetGroup(
             self,
             f"{prefix}GreenTargetGroup",
-            target_group_name=f"{prefix}GreenTargetGroup",
+            target_group_name=f"{prefix}GreenTG",
             protocol=elb.ApplicationProtocol.HTTP,
             target_type=elb.TargetType.IP,
             vpc=vpc,

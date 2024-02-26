@@ -6,13 +6,13 @@ from aws_cdk import (
     RemovalPolicy,
 )
 from pipeline.pipeline_stack import (
-    ServerlessTodoPipelineStack,
-    ServerlessTodoBackendStage,
+    PipelineStack,
+    ApplicationStage,
 )
 
 app = App()
 
-ServerlessTodoPipelineStack(
+PipelineStack(
     app,
     "TodoPipelineStack",
     prefix="Todo",
@@ -23,9 +23,10 @@ ServerlessTodoPipelineStack(
 
 # The below stage exists purely for developers to create ephemeral environments using the
 # deploy_ephemeral script. It will only synthesize if we supply the required context.
+# TODO simply create the stacks instead?
 prefix = app.node.try_get_context("ephemeral_prefix")
 if prefix:
-    ServerlessTodoBackendStage(
+    ApplicationStage(
         app,
         f"{prefix}Stage",
         prefix=prefix,
