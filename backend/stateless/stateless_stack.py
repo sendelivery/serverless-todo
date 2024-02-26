@@ -12,7 +12,8 @@ from aws_cdk import (
 
 
 # This stack consists of a handful of Lambdas for CRUD operations, each making use of a Lambda
-# layer to interact with DynamoDB. They are fronted by an API Gateway stage.
+# layer to interact with DynamoDB. They are fronted by a private API Gateway stage. The Lambdas
+# are deployed to private subnets and access the REST API via a VPC interface endpoint.
 
 
 class StatelessStack(Stack):
@@ -56,7 +57,7 @@ class StatelessStack(Stack):
             ]
         )
 
-        # Define the REST API - deploy "latestDeployment" by default
+        # Define the REST API - deploy "prod" by default
         self._api = apigw.RestApi(
             self,
             f"{prefix}ApiDeploymentStage",
@@ -143,90 +144,111 @@ class StatelessStack(Stack):
 
         # Lastly, we'll wire up the HTTP methods to their corresponding Lambdas.
 
-        # Define GET method for /entries
         # TODO consider updating integration types to the LambdaIntegration class.
-        entries_get_method = entries_resource.add_method(
+
+        # Define GET method for /entries
+        # entries_get_method = entries_resource.add_method(
+        #     "GET",
+        #     authorization_type=None,
+        #     integration=apigw.AwsIntegration(
+        #         service="lambda",
+        #         proxy=True,
+        #         path=f"2015-03-31/functions/{get_entries_function.function_arn}/invocations",
+        #     ),
+        # )
+
+        entries_resource.add_method(
             "GET",
-            authorization_type=None,
-            integration=apigw.AwsIntegration(
-                service="lambda",
-                proxy=True,
-                path=f"2015-03-31/functions/{get_entries_function.function_arn}/invocations",
-            ),
+            integration=apigw.LambdaIntegration(handler=get_entries_function),
         )
 
         # Define POST method for /entries
-        entries_post_method = entries_resource.add_method(
+        # entries_post_method = entries_resource.add_method(
+        #     "POST",
+        #     authorization_type=None,
+        #     integration=apigw.AwsIntegration(
+        #         service="lambda",
+        #         proxy=True,
+        #         path=f"2015-03-31/functions/{upsert_entries_function.function_arn}/invocations",
+        #     ),
+        # )
+
+        entries_resource.add_method(
             "POST",
-            authorization_type=None,
-            integration=apigw.AwsIntegration(
-                service="lambda",
-                proxy=True,
-                path=f"2015-03-31/functions/{upsert_entries_function.function_arn}/invocations",
-            ),
+            integration=apigw.LambdaIntegration(handler=upsert_entries_function),
         )
 
         # Define PUT method for /entries
-        entries_put_method = entries_resource.add_method(
+        # entries_put_method = entries_resource.add_method(
+        #     "PUT",
+        #     authorization_type=None,
+        #     integration=apigw.AwsIntegration(
+        #         service="lambda",
+        #         proxy=True,
+        #         path=f"2015-03-31/functions/{upsert_entries_function.function_arn}/invocations",
+        #     ),
+        # )
+
+        entries_resource.add_method(
             "PUT",
-            authorization_type=None,
-            integration=apigw.AwsIntegration(
-                service="lambda",
-                proxy=True,
-                path=f"2015-03-31/functions/{upsert_entries_function.function_arn}/invocations",
-            ),
+            integration=apigw.LambdaIntegration(handler=upsert_entries_function),
         )
 
         # Define DELETE method for /entries
-        entries_delete_method = entries_resource.add_method(
+        # entries_delete_method = entries_resource.add_method(
+        #     "DELETE",
+        #     authorization_type=None,
+        #     integration=apigw.AwsIntegration(
+        #         service="lambda",
+        #         proxy=True,
+        #         path=f"2015-03-31/functions/{delete_entries_function.function_arn}/invocations",
+        #     ),
+        # )
+
+        entries_resource.add_method(
             "DELETE",
-            authorization_type=None,
-            integration=apigw.AwsIntegration(
-                service="lambda",
-                proxy=True,
-                path=f"2015-03-31/functions/{delete_entries_function.function_arn}/invocations",
-            ),
+            integration=apigw.LambdaIntegration(handler=delete_entries_function),
         )
 
         # TODO - do we need these permissions??
 
-        # Permission to invoke the get_entries Lambda from GET verb
-        get_entries_function.add_permission(
-            f"{prefix}ApiGWInvokeGetEntriesPermission",
-            principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=self._api.arn_for_execute_api(
-                method=entries_get_method.http_method, path=entries_resource.path
-            ),
-        )
+        # # Permission to invoke the get_entries Lambda from GET verb
+        # get_entries_function.add_permission(
+        #     f"{prefix}ApiGWInvokeGetEntriesPermission",
+        #     principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=self._api.arn_for_execute_api(
+        #         method=entries_get_method.http_method, path=entries_resource.path
+        #     ),
+        # )
 
-        # Permission to invoke the upsert_entries Lambda from POST / PUT verbs
-        upsert_entries_function.add_permission(
-            f"{prefix}ApiGWInvokeUpsertEntriesPOSTPermission",
-            principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=self._api.arn_for_execute_api(
-                method=entries_post_method.http_method, path=entries_resource.path
-            ),
-        )
-        upsert_entries_function.add_permission(
-            f"{prefix}ApiGWInvokeUpsertEntriesPUTPermission",
-            principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=self._api.arn_for_execute_api(
-                method=entries_put_method.http_method, path=entries_resource.path
-            ),
-        )
+        # # Permission to invoke the upsert_entries Lambda from POST / PUT verbs
+        # upsert_entries_function.add_permission(
+        #     f"{prefix}ApiGWInvokeUpsertEntriesPOSTPermission",
+        #     principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=self._api.arn_for_execute_api(
+        #         method=entries_post_method.http_method, path=entries_resource.path
+        #     ),
+        # )
+        # upsert_entries_function.add_permission(
+        #     f"{prefix}ApiGWInvokeUpsertEntriesPUTPermission",
+        #     principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=self._api.arn_for_execute_api(
+        #         method=entries_put_method.http_method, path=entries_resource.path
+        #     ),
+        # )
 
-        # Permission to invoke the delete_entries Lambda from DELETE verb
-        delete_entries_function.add_permission(
-            f"{prefix}ApiGWInvokeDeleteEntriesPermission",
-            principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
-            action="lambda:InvokeFunction",
-            source_arn=self._api.arn_for_execute_api(
-                method=entries_delete_method.http_method, path=entries_resource.path
-            ),
-        )
+        # # Permission to invoke the delete_entries Lambda from DELETE verb
+        # delete_entries_function.add_permission(
+        #     f"{prefix}ApiGWInvokeDeleteEntriesPermission",
+        #     principal=iam.ServicePrincipal("apigateway.amazonaws.com"),
+        #     action="lambda:InvokeFunction",
+        #     source_arn=self._api.arn_for_execute_api(
+        #         method=entries_delete_method.http_method, path=entries_resource.path
+        #     ),
+        # )
 
         # We'll expose our API Gateway endpoint using SSM Parameter Store so we have a decoupled
         # way of accessing it later in our pipeline and web stacks. Using a CfnOutput would make
