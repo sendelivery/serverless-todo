@@ -46,7 +46,7 @@ class ApplicationStage(Stage):
 
         # The stateless stack defines the application tier resources, CRUD Lambdas, and an API
         # Gateway REST API.
-        StatelessStack(
+        self._stateless_stack = StatelessStack(
             self,
             f"{prefix}StatelessStack",
             prefix=prefix,
@@ -63,5 +63,6 @@ class ApplicationStage(Stage):
             self,
             f"{prefix}WebStack",
             prefix=prefix,
+            api_endpoint=self._stateless_stack.api_endpoint,
             **kwargs,
         )

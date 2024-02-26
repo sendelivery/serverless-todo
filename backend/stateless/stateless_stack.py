@@ -3,6 +3,7 @@ from aws_cdk.aws_dynamodb import Table
 from aws_cdk.aws_ec2 import IVpc, IVpcEndpoint
 from aws_cdk import (
     Stack,
+    CfnOutput,
     aws_ec2 as ec2,
     aws_lambda as _lambda,
     aws_apigateway as apigw,
@@ -16,6 +17,10 @@ from aws_cdk import (
 
 
 class StatelessStack(Stack):
+    @property
+    def api_endpoint(self):
+        return self._api_endpoint
+
     def __init__(
         self,
         scope: Construct,
@@ -233,4 +238,11 @@ class StatelessStack(Stack):
             f"{prefix}ApiEndpoint",
             parameter_name=f"{prefix}ApiEndpoint",
             string_value=api.url,
+        )
+
+        self._api_endpoint = CfnOutput(
+            self,
+            f"{prefix}ApiEndpointCfnOutput",
+            export_name=f"{prefix}ApiEndpointCfnOutput",
+            value=api.url,
         )

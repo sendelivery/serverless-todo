@@ -1,4 +1,5 @@
 from aws_cdk import (
+    CfnOutput,
     Duration,
     Stack,
     aws_ec2 as ec2,
@@ -30,6 +31,7 @@ class WebStack(Stack):
         scope: Construct,
         construct_id: str,
         prefix: str,
+        api_endpoint: CfnOutput,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -103,15 +105,15 @@ class WebStack(Stack):
         base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
 
         # Source the API endpoint at deploy time, not synth time.
-        todo_endpoint = ssm.StringParameter.value_for_string_parameter(
-            self, f"{prefix}ApiEndpoint"
-        )
+        # todo_endpoint = ssm.StringParameter.value_for_string_parameter(
+        #     self, f"{prefix}ApiEndpoint"
+        # )
 
         task_definition.add_container(
             f"{prefix}Container",
             container_name=f"{prefix}Container",
             image=ecs.ContainerImage.from_registry(base_image),
-            environment={"TODO_API_ENDPOINT": todo_endpoint},
+            environment={"TODO_API_ENDPOINT": api_endpoint.import_value},
             memory_limit_mib=512,
             cpu=256,
             # https://stackoverflow.com/questions/55702196/essential-container-in-task-exited
