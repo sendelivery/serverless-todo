@@ -65,7 +65,6 @@ class PipelineStack(Stack):
                 iam.PolicyStatement(
                     actions=[
                         "ecr:CompleteLayerUpload",
-                        "ecr:GetAuthorizationToken",
                         "ecr:UploadLayerPart",
                         "ecr:InitiateLayerUpload",
                         "ecr:BatchCheckLayerAvailability",
@@ -73,7 +72,14 @@ class PipelineStack(Stack):
                     ],
                     resources=[ecr_repo_arn],
                     effect=iam.Effect.ALLOW,
-                )
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        "ecr:GetAuthorizationToken",
+                    ],
+                    resources=["*"],
+                    effect=iam.Effect.ALLOW,
+                ),
             ],
         )
 

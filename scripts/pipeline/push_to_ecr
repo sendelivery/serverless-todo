@@ -15,6 +15,12 @@ cd web/ || exit
 
 echo Logging in to Amazon ECR
 aws ecr get-login-password | docker login --username AWS --password-stdin "$repo"
+login_status=$?
+
+if [ $login_status -ne 0 ]; then
+  echo -e "\nError: push_to_ecr failed with exit code $login_status."
+  exit $login_status
+fi
 
 echo Build and tag Docker image
 docker build -t web-app .
