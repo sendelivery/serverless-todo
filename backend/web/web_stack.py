@@ -1,5 +1,5 @@
 from aws_cdk.aws_apigateway import IRestApi
-from aws_cdk.aws_ecr import IRepository, Repository
+from aws_cdk.aws_ecr import IRepository
 from aws_cdk import (
     Duration,
     Stack,

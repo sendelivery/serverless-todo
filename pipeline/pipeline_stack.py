@@ -113,7 +113,8 @@ class PipelineStack(Stack):
                     f"{prefix}Container "
                     f"{prefix}FargateTaskExecutionRole "
                     f"{prefix}FargateTaskDefinition "
-                    f"{prefix}ApiEndpoint"
+                    f"{prefix}ApiEndpoint "
+                    f"{ecr_repo_uri}:latest"
                 ),
             ],
         )
