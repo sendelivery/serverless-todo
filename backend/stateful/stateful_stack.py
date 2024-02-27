@@ -1,6 +1,7 @@
 from aws_cdk import (
     Stack,
     aws_dynamodb as dynamo,
+    aws_ecr as ecr,
     RemovalPolicy,
 )
 from constructs import Construct
@@ -18,6 +19,10 @@ class StatefulStack(Stack):
         """
         return self._entries_table
 
+    @property
+    def ecr_repository(self):
+        return self._ecr_repository
+
     def __init__(
         self,
         scope: Construct,
@@ -34,5 +39,27 @@ class StatefulStack(Stack):
             f"{prefix}EntriesTable",
             table_name=f"{prefix}EntriesTable",
             partition_key=dynamo.Attribute(name="Id", type=dynamo.AttributeType.STRING),
+            removal_policy=removal_policy,
+        )
+
+        auto_delete_images = False
+        lifecycle_rule = None
+        if removal_policy == RemovalPolicy.DESTROY:
+            auto_delete_images = True
+            lifecycle_rule = [
+                ecr.LifecycleRule(
+                    description="Hold only 1 image in ephemeral repository.",
+                    max_image_count=1,
+                )
+            ]
+
+        repository_name = f"{prefix.lower()}-web-container"
+
+        self._ecr_repository = ecr.Repository(
+            self,
+            f"{prefix}ContainerRepo",
+            repository_name=repository_name,
+            auto_delete_images=auto_delete_images,
+            lifecycle_rules=lifecycle_rule,
             removal_policy=removal_policy,
         )
