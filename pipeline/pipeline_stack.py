@@ -24,7 +24,7 @@ class PipelineStack(Stack):
                 input=pipelines.CodePipelineSource.git_hub(
                     # TODO move these into environment variables
                     "sendelivery/serverless-todo",
-                    "feature/private-resources",
+                    "main",
                 ),
                 commands=[
                     "chmod a+x ./scripts/pipeline/synth",
@@ -33,11 +33,24 @@ class PipelineStack(Stack):
             ),
         )
 
+        application = ApplicationStage(
+            self, f"{prefix}ApplicationStage", prefix=prefix, **kwargs
+        )
+
         # Below we define custom pipeline steps required for the initial deployment of our web app,
         # and for subsequent Blue / Green deployments.
 
-        # TODO ECR repo should be created in the stateful stack.
-        container_repository = f"{self.account}.dkr.ecr.{self.region}.amazonaws.com/serverless-todo-web-app"
+        # This repository is created in our stateful stack, unfortunately we can't use the actual
+        # construct here as it doesn't exist when the pipeline is synthesized and thus would be
+        # considered "crossing stage boundaries". However, the name, URI, and ARN can be
+        # consistently determined using information we have.
+        ecr_repo_name = f"{prefix.lower()}-web-container"
+        ecr_repo_uri = (
+            f"{self.account}.dkr.ecr.{self.region}.amazonaws.com/{ecr_repo_name}"
+        )
+        ecr_repo_arn = (
+            f"arn:aws:ecr:{self.region}:{self.account}:repository/{ecr_repo_name}"
+        )
 
         # STEP: Build and upload a Docker image of our Next.js web app to ECR.
         # This step uses the pipeline's source file set by default (i.e. GitHub), meaning we don't
@@ -46,24 +59,27 @@ class PipelineStack(Stack):
             f"{prefix}BuildAndUploadDockerImage",
             commands=[
                 "chmod a+x ./scripts/pipeline/push_to_ecr",
-                f"./scripts/pipeline/push_to_ecr {container_repository}",
+                f"./scripts/pipeline/push_to_ecr {ecr_repo_uri}",
             ],
             role_policy_statements=[
                 iam.PolicyStatement(
                     actions=[
-                        "ecr:BatchCheckLayerAvailability",
                         "ecr:CompleteLayerUpload",
-                        "ecr:GetAuthorizationToken",
-                        "ecr:InitiateLayerUpload",
-                        "ecr:PutImage",
                         "ecr:UploadLayerPart",
-                        "ecr:BatchGetImage",
-                        "ecr:GetDownloadUrlForLayer",
+                        "ecr:InitiateLayerUpload",
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:PutImage",
                     ],
-                    # TODO restrict to specific ECR repo
+                    resources=[ecr_repo_arn],
+                    effect=iam.Effect.ALLOW,
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        "ecr:GetAuthorizationToken",
+                    ],
                     resources=["*"],
                     effect=iam.Effect.ALLOW,
-                )
+                ),
             ],
         )
 
@@ -97,7 +113,8 @@ class PipelineStack(Stack):
                     f"{prefix}Container "
                     f"{prefix}FargateTaskExecutionRole "
                     f"{prefix}FargateTaskDefinition "
-                    f"{prefix}ApiEndpoint"
+                    f"{prefix}ApiEndpoint "
+                    f"{ecr_repo_uri}:latest"
                 ),
             ],
         )
@@ -136,10 +153,6 @@ class PipelineStack(Stack):
 
         # Now we can add the application stage, containing all our stacks, to the pipeline. Wiring
         # up the previously defined steps.
-
-        application = ApplicationStage(
-            self, f"{prefix}ApplicationStage", prefix=prefix, **kwargs
-        )
 
         pipeline.add_stage(
             application,

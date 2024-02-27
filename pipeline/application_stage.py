@@ -64,5 +64,6 @@ class ApplicationStage(Stage):
             prefix=prefix,
             api=self._stateless.api,
             vpc=self._networking.vpc,
+            ecr_repo=self._stateful.ecr_repository,
             **kwargs,
         )

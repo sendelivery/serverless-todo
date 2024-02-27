@@ -1,4 +1,5 @@
 from aws_cdk.aws_apigateway import IRestApi
+from aws_cdk.aws_ecr import IRepository
 from aws_cdk import (
     Duration,
     Stack,
@@ -31,6 +32,7 @@ class WebStack(Stack):
         prefix: str,
         api: IRestApi,
         vpc: ec2.IVpc,
+        ecr_repo: IRepository,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -54,7 +56,6 @@ class WebStack(Stack):
             ],
         )
 
-        # TODO narrow inline policy to the exact ECR repository we need.
         execution_role = iam.Role(
             self,
             f"{prefix}FargateTaskExecutionRole",
@@ -67,10 +68,6 @@ class WebStack(Stack):
                             effect=iam.Effect.ALLOW,
                             resources=["*"],
                             actions=[
-                                "ecr:GetAuthorizationToken",
-                                "ecr:BatchCheckLayerAvailability",
-                                "ecr:GetDownloadUrlForLayer",
-                                "ecr:BatchGetImage",
                                 "logs:CreateLogGroup",
                                 "logs:CreateLogStream",
                                 "logs:PutLogEvents",
@@ -80,6 +77,7 @@ class WebStack(Stack):
                 )
             },
         )
+        ecr_repo.grant_pull(execution_role)
 
         # Create a task definition to tell ECS how to run our Next.js container.
         # Using defaults and the bare minimum in terms of CPU / RAM will be more than enough.
@@ -96,13 +94,13 @@ class WebStack(Stack):
         # We'll add the container that will run the web app here, the container image will be the
         # one tagged as "latest" in our ECR repo. This alone, however, is not enough to handle
         # deploying new versions of our image. Hence the deployment group created further down.
-        # TODO don't hardcode the ECR repo
-        base_image = "460848972690.dkr.ecr.eu-west-2.amazonaws.com/serverless-todo-web-app:latest"
 
         task_definition.add_container(
             f"{prefix}Container",
             container_name=f"{prefix}Container",
-            image=ecs.ContainerImage.from_registry(base_image),
+            image=ecs.ContainerImage.from_registry(
+                ecr_repo.repository_uri_for_tag("latest")
+            ),
             environment={"TODO_API_ENDPOINT": api.url},
             memory_limit_mib=512,
             cpu=256,
