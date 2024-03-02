@@ -27,6 +27,8 @@ task_execution_role_name=$5
 task_definition_name=$6
 api_endpoint_ssm_param=$7
 image_uri=$8
+log_group=$9
+stream_prefix=${10}
 
 echo "Pipeline Id:" "$pipeline_id"
 echo "Account:" "$account"
@@ -36,9 +38,11 @@ echo "Task Execution Role Name:" "$task_execution_role_name"
 echo "Task Definition Name:" "$task_definition_name"
 echo "API Endpoint SSM Param Name:" "$api_endpoint_ssm_param"
 echo "Image URI:" "$image_uri"
+echo "Log Group:" "$log_group"
+echo "Stream Prefix:" "$stream_prefix"
 
 TodoApiEndpoint="$(aws ssm get-parameter --name "$api_endpoint_ssm_param" --query Parameter.Value)" || exit
-TodoApiEndpoint=$(echo "$TodoApiEndpoint" | tr -d '"') # Remove double quotes
+TodoApiEndpoint=$(echo "$TodoApiEndpoint" | tr -d '"') # Removes double quotes
 
 echo "TodoApiEndpoint:" "$TodoApiEndpoint"
 
@@ -54,6 +58,7 @@ sed 's#CONTAINER_NAME#'"$container_name"'#g' codedeploy/template-appspec.yaml >c
 sed 's#CONTAINER_NAME#'"$container_name"'#g' codedeploy/template-taskdef.json |
   sed 's#TASK_EXEC_ROLE#arn:aws:iam::'"$account"':role/'"$task_execution_role_name"'#g' |
   sed 's#REGION#'"$region"'#g' | sed 's#TASK_DEF#'"$task_definition_name"'#g' |
+  sed 's#LOG_GROUP#'"$log_group"'#g' | sed 's#STREAM_PREFIX#'"$stream_prefix"'#g' |
   sed 's#TODO_API_ENDPOINT_VALUE#'"$TodoApiEndpoint"'#g' >codedeploy/taskdef.json
 
 cat codedeploy/appspec.yaml

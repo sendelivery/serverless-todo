@@ -9,6 +9,7 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_codedeploy as codedeploy,
     aws_elasticloadbalancingv2 as elb,
+    aws_logs as logs,
 )
 from constructs import Construct
 
@@ -95,6 +96,13 @@ class WebStack(Stack):
         # one tagged as "latest" in our ECR repo. This alone, however, is not enough to handle
         # deploying new versions of our image. Hence the deployment group created further down.
 
+        log_group = logs.LogGroup(
+            self,
+            f"{prefix}WebContainersLogGroup",
+            log_group_name=f"{prefix}WebContainers",
+            retention=logs.RetentionDays.ONE_WEEK,
+        )
+
         task_definition.add_container(
             f"{prefix}Container",
             container_name=f"{prefix}Container",
@@ -105,7 +113,7 @@ class WebStack(Stack):
             memory_limit_mib=512,
             cpu=256,
             # https://stackoverflow.com/questions/55702196/essential-container-in-task-exited
-            logging=ecs.AwsLogDriver(stream_prefix=prefix),
+            logging=ecs.AwsLogDriver(stream_prefix=prefix, log_group=log_group),
             port_mappings=[
                 # Next.js uses port 3000 by default, we'll adhere to that.
                 ecs.PortMapping(
