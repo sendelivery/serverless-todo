@@ -97,6 +97,7 @@ class StatelessStack(Stack):
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
             ),
+            log_format="JSON",
         )
         entries_table.grant(
             get_entries_function, "dynamodb:DescribeTable", "dynamodb:Scan"
@@ -116,6 +117,7 @@ class StatelessStack(Stack):
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
             ),
+            log_format="JSON",
         )
         entries_table.grant(
             upsert_entries_function,
@@ -137,6 +139,7 @@ class StatelessStack(Stack):
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
             ),
+            log_format="JSON",
         )
         entries_table.grant(
             delete_entries_function, "dynamodb:DescribeTable", "dynamodb:DeleteItem"

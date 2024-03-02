@@ -112,7 +112,6 @@ class WebStack(Stack):
             environment={"TODO_API_ENDPOINT": api.url},
             memory_limit_mib=512,
             cpu=256,
-            # https://stackoverflow.com/questions/55702196/essential-container-in-task-exited
             logging=ecs.AwsLogDriver(stream_prefix=prefix, log_group=log_group),
             port_mappings=[
                 # Next.js uses port 3000 by default, we'll adhere to that.
