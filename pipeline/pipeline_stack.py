@@ -24,7 +24,7 @@ class PipelineStack(Stack):
                 input=pipelines.CodePipelineSource.git_hub(
                     # TODO move these into environment variables
                     "sendelivery/serverless-todo",
-                    "main",
+                    "fix/logging",
                 ),
                 commands=[
                     "chmod a+x ./scripts/pipeline/synth",
