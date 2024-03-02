@@ -152,10 +152,11 @@ class WebStack(Stack):
 
         # Define the "green" target group and listener that our ALB will use to route canary
         # traffic.
+        # We'll omit a target group name to prevent confusion once the target groups have been
+        # switched over in the ALB.
         green_target_group = elb.ApplicationTargetGroup(
             self,
             f"{prefix}GreenTargetGroup",
-            target_group_name=f"{prefix}GreenTG",
             protocol=elb.ApplicationProtocol.HTTP,
             target_type=elb.TargetType.IP,
             vpc=vpc,
