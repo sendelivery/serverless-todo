@@ -9,6 +9,9 @@ table = get_table(logger)
 
 
 def handler(event, context):
+    logger.info(f"Event: {event}")
+    logger.info(f"Context: {context}")
+
     entries = []
 
     try:
@@ -16,13 +19,18 @@ def handler(event, context):
 
         done = False
         start_key = None
+
         while not done:
             if start_key:
                 scan_kwargs["ExclusiveStartKey"] = start_key
             response = table.scan(**scan_kwargs)
+            logger.info(f"Response page: {response}")
+
             entries.extend(response.get("Items", []))
+
             start_key = response.get("LastEvaluatedKey", None)
             done = start_key is None
+
     except ClientError as err:
         logger.error(
             "Failed when scanning for entries due to: %s: %s",
