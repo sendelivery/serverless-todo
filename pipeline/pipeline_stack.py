@@ -24,7 +24,7 @@ class PipelineStack(Stack):
                 input=pipelines.CodePipelineSource.git_hub(
                     # TODO move these into environment variables
                     "sendelivery/serverless-todo",
-                    "main",
+                    "fix/logging",
                 ),
                 commands=[
                     "chmod a+x ./scripts/pipeline/synth",
@@ -114,7 +114,9 @@ class PipelineStack(Stack):
                     f"{prefix}FargateTaskExecutionRole "
                     f"{prefix}FargateTaskDefinition "
                     f"{prefix}ApiEndpoint "
-                    f"{ecr_repo_uri}:latest"
+                    f"{ecr_repo_uri}:latest "
+                    f"{prefix}WebContainers "
+                    f"{prefix}"
                 ),
             ],
         )

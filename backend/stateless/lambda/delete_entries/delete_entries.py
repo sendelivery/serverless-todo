@@ -9,7 +9,8 @@ table = get_table(logger)
 
 
 def handler(event, context):
-    logger.info(event, context)
+    logger.info(f"Event: {event}")
+    logger.info(f"Context: {context}")
 
     body = json.loads(event["body"])
     id = body["Id"]

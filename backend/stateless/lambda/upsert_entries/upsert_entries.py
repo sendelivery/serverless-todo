@@ -10,7 +10,8 @@ table = get_table(logger)
 
 
 def handler(event, context):
-    logger.info(event, context)
+    logger.info(f"Event: {event}")
+    logger.info(f"Context: {context}")
 
     entry = json.loads(event["body"])
 
