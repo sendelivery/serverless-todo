@@ -7,17 +7,20 @@ export default async function Page() {
   let entries: TodoEntry[] = [];
 
   if (todoApiEndpoint) {
-    const response = await fetch(todoApiEndpoint, {
-      next: {
-        tags: [ENTRIES_CACHE_TAG],
-      },
-    });
+    try {
+      const response = await fetch(todoApiEndpoint, {
+        next: {
+          tags: [ENTRIES_CACHE_TAG],
+        },
+      });
 
-    console.log({ response });
+      console.log({ response });
 
-    entries = await response.json();
-
-    console.log({ entries });
+      entries = await response.json();
+      console.log({ entries });
+    } catch (error) {
+      console.error(error);
+    }
   } else {
     console.warn(
       "API endpoint and or key are undefined, please ensure environment variables are correctly set."
