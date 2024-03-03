@@ -70,6 +70,7 @@ class NetworkingStack(Stack):
             "Allow TCP from anywhere.",
         )
 
+        self._vpc_interface_endpoint = None
         if not ephemeral_deployment:
             # This VPC interface endpoint will be used to secure our REST API and simulatneously allow
             # the web app that will be deployed in our public subnets to access the private REST API.

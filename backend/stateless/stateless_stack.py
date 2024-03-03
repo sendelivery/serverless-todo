@@ -34,38 +34,38 @@ class StatelessStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        endpoint_configuration = None
+        api_resource_policy = None
+
         # Resource policy for our private API, this will restrict our API so that it can only be
         # invoked via the designated VPC endpoint.
-        api_resource_policy = iam.PolicyDocument(
-            statements=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=["execute-api:Invoke"],
-                    principals=[iam.AnyPrincipal()],
-                    resources=["execute-api:/*/*/*"],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.DENY,
-                    principals=[iam.AnyPrincipal()],
-                    actions=["execute-api:Invoke"],
-                    resources=["execute-api:/*/*/*"],
-                    conditions={
-                        "StringNotEquals": {
-                            "aws:SourceVpce": vpc_endpoint.vpc_endpoint_id,
-                        }
-                    },
-                ),
-            ]
-        )
+        if not ephemeral_deployment:
+            api_resource_policy = iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=["execute-api:Invoke"],
+                        principals=[iam.AnyPrincipal()],
+                        resources=["execute-api:/*/*/*"],
+                    ),
+                    iam.PolicyStatement(
+                        effect=iam.Effect.DENY,
+                        principals=[iam.AnyPrincipal()],
+                        actions=["execute-api:Invoke"],
+                        resources=["execute-api:/*/*/*"],
+                        conditions={
+                            "StringNotEquals": {
+                                "aws:SourceVpce": vpc_endpoint.vpc_endpoint_id,
+                            }
+                        },
+                    ),
+                ]
+            )
 
-        endpoint_configuration = apigw.EndpointConfiguration(
-            types=[apigw.EndpointType.PRIVATE],
-            vpc_endpoints=[vpc_endpoint],
-        )
-
-        if ephemeral_deployment:
-            endpoint_configuration = None
-            api_resource_policy = None
+            endpoint_configuration = apigw.EndpointConfiguration(
+                types=[apigw.EndpointType.PRIVATE],
+                vpc_endpoints=[vpc_endpoint],
+            )
 
         # Define the REST API - deploy "prod" by default
         self._api = apigw.RestApi(
