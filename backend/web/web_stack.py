@@ -149,6 +149,10 @@ class WebStack(Stack):
             deployment_controller=deployment_controller,
         )
 
+        fargate_service.target_group.configure_health_check(
+            healthy_http_codes="200", path="/health"
+        )
+
         # From here on, we'll define the resources required for the Blue / Green deployment
         # strategy.
         # TODO move this out into a custom construct?
@@ -171,6 +175,7 @@ class WebStack(Stack):
             f"{prefix}GreenTargetGroup",
             protocol=elb.ApplicationProtocol.HTTP,
             target_type=elb.TargetType.IP,
+            health_check=elb.HealthCheck(healthy_http_codes="200", path="/health"),
             vpc=vpc,
         )
 
