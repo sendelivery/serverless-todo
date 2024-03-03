@@ -29,6 +29,7 @@ class StatelessStack(Stack):
         entries_table: ITable,
         vpc: IVpc,
         vpc_endpoint: IVpcEndpoint,
+        ephemeral_deployment: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -57,16 +58,22 @@ class StatelessStack(Stack):
             ]
         )
 
+        endpoint_configuration = apigw.EndpointConfiguration(
+            types=[apigw.EndpointType.PRIVATE],
+            vpc_endpoints=[vpc_endpoint],
+        )
+
+        if ephemeral_deployment:
+            endpoint_configuration = None
+            api_resource_policy = None
+
         # Define the REST API - deploy "prod" by default
         self._api = apigw.RestApi(
             self,
             f"{prefix}ApiDeploymentStage",
             rest_api_name=f"{prefix}Api",
             deploy=True,
-            endpoint_configuration=apigw.EndpointConfiguration(
-                types=[apigw.EndpointType.PRIVATE],
-                vpc_endpoints=[vpc_endpoint],
-            ),
+            endpoint_configuration=endpoint_configuration,
             policy=api_resource_policy,
         )
         entries_resource = self._api.root.add_resource("entries")

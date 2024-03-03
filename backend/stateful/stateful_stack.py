@@ -53,7 +53,7 @@ class StatefulStack(Stack):
                 )
             ]
 
-        repository_name = f"{prefix.lower()}-web-container"
+        repository_name = f"{prefix.lower()}web-container"
 
         self._ecr_repository = ecr.Repository(
             self,

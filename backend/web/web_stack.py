@@ -2,6 +2,7 @@ from aws_cdk.aws_apigateway import IRestApi
 from aws_cdk.aws_ecr import IRepository
 from aws_cdk import (
     Duration,
+    RemovalPolicy,
     Stack,
     aws_ec2 as ec2,
     aws_ecs as ecs,
@@ -34,6 +35,7 @@ class WebStack(Stack):
         api: IRestApi,
         vpc: ec2.IVpc,
         ecr_repo: IRepository,
+        ephemeral_deployment: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -101,6 +103,9 @@ class WebStack(Stack):
             f"{prefix}WebContainersLogGroup",
             log_group_name=f"{prefix}WebContainers",
             retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
+            if ephemeral_deployment
+            else RemovalPolicy.RETAIN,
         )
 
         task_definition.add_container(
@@ -121,6 +126,13 @@ class WebStack(Stack):
             ],
         )
 
+        deployment_controller = ecs.DeploymentController(
+            type=ecs.DeploymentControllerType.CODE_DEPLOY
+        )
+
+        if ephemeral_deployment:
+            deployment_controller = None
+
         # The ALB fronting our cluster will be internet-facing and be assigned a public IP so that
         # traffic from the open internet can reach it.
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
@@ -134,9 +146,7 @@ class WebStack(Stack):
             listener_port=80,
             assign_public_ip=True,  # places our containers in our VPC's public subnets by default
             public_load_balancer=True,
-            deployment_controller=ecs.DeploymentController(
-                type=ecs.DeploymentControllerType.CODE_DEPLOY
-            ),
+            deployment_controller=deployment_controller,
         )
 
         # From here on, we'll define the resources required for the Blue / Green deployment
@@ -148,6 +158,9 @@ class WebStack(Stack):
             f"{prefix}DeploymentApplication",
             application_name=f"{prefix}DeploymentApplication",
         )
+
+        if ephemeral_deployment:
+            return
 
         # Define the "green" target group and listener that our ALB will use to route canary
         # traffic.

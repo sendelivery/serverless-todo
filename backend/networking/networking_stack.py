@@ -20,7 +20,14 @@ class NetworkingStack(Stack):
         """
         return self._vpc_interface_endpoint
 
-    def __init__(self, scope: Construct, id: str, prefix: str, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        id: str,
+        prefix: str,
+        ephemeral_deployment: bool = False,
+        **kwargs,
+    ) -> None:
         super().__init__(scope, id, **kwargs)
 
         # We'll create a VPC with the specified subnet configuration, the public subnets will be
@@ -63,14 +70,17 @@ class NetworkingStack(Stack):
             "Allow TCP from anywhere.",
         )
 
-        # This VPC interface endpoint will be used to secure our REST API and simulatneously allow
-        # the web app that will be deployed in our public subnets to access the private REST API.
-        self._vpc_interface_endpoint = self._vpc.add_interface_endpoint(
-            f"{prefix}VpcInterfaceEndpointForApi",
-            service=ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
-            subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
-            security_groups=[security_group],
-        )
+        if not ephemeral_deployment:
+            # This VPC interface endpoint will be used to secure our REST API and simulatneously allow
+            # the web app that will be deployed in our public subnets to access the private REST API.
+            self._vpc_interface_endpoint = self._vpc.add_interface_endpoint(
+                f"{prefix}VpcInterfaceEndpointForApi",
+                service=ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
+                subnets=ec2.SubnetSelection(
+                    subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
+                ),
+                security_groups=[security_group],
+            )
 
         # This VPC gateway endpoint is required to allow the Lambdas housed in our private subnet
         # to access the DynamoDB table defined in our stateful stack.

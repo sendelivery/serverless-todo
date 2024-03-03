@@ -26,12 +26,15 @@ class ApplicationStage(Stage):
     ):
         super().__init__(scope, id, **kwargs)
 
+        ephemeral_deployment = self.node.try_get_context("ephemeral_prefix") is not None
+
         # The networking stack defines the VPC, subnets, and VPC endpoints that will be used
         # throughout.
         self._networking = NetworkingStack(
             self,
             f"{prefix}NetworkingStack",
             prefix=prefix,
+            ephemeral_deployment=ephemeral_deployment,
         )
 
         # The stateful stack defines our application's storage tier. In this case, just a DynamoDB
@@ -52,6 +55,7 @@ class ApplicationStage(Stage):
             entries_table=self.stateful_stack.entries_table,
             vpc=self._networking.vpc,
             vpc_endpoint=self._networking.vpc_interface_endpoint,
+            ephemeral_deployment=ephemeral_deployment,
             **kwargs,
         )
 
@@ -65,5 +69,6 @@ class ApplicationStage(Stage):
             api=self._stateless.api,
             vpc=self._networking.vpc,
             ecr_repo=self._stateful.ecr_repository,
+            ephemeral_deployment=ephemeral_deployment,
             **kwargs,
         )
