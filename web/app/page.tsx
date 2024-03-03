@@ -3,6 +3,8 @@ import { type TodoEntry } from "@/lib/types";
 import ToastQueueProvider from "@/components/ToastQueueProvider";
 import TodoSection from "@/components/TodoSection";
 
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
   let entries: TodoEntry[] = [];
 
