@@ -13,7 +13,11 @@ export default async function Page() {
       },
     });
 
+    console.log({ response });
+
     entries = await response.json();
+
+    console.log({ entries });
   } else {
     console.warn(
       "API endpoint and or key are undefined, please ensure environment variables are correctly set."
