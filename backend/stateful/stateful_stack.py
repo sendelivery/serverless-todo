@@ -7,7 +7,7 @@ from aws_cdk import (
 from constructs import Construct
 
 
-# The stateful side of our application consists of a single DynamoDB table.
+# The stateful side of our application consists of a single DynamoDB table and ECR repository.
 
 
 class StatefulStack(Stack):

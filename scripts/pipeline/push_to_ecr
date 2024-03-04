@@ -8,10 +8,20 @@
 #
 
 repo=$1
+api_endpoint_ssm_param=$2
 
-echo "ECR Repository: "$repo
+echo "ECR Repository: " "$repo"
+# TODO - do we need this now that our root page is dynamically rendered?
+echo "API Endpoint SSM Param Name:" "$api_endpoint_ssm_param"
+
+TodoApiEndpoint="$(aws ssm get-parameter --name "$api_endpoint_ssm_param" --query Parameter.Value)" || exit
+TodoApiEndpoint=$(echo "$TodoApiEndpoint" | tr -d '"') # Removes double quotes
+
+echo "API Endpoint:" "$TodoApiEndpoint"
 
 cd web/ || exit
+
+echo "TODO_API_ENDPOINT=""$TodoApiEndpoint" >.env.local
 
 echo Logging in to Amazon ECR
 aws ecr get-login-password | docker login --username AWS --password-stdin "$repo"

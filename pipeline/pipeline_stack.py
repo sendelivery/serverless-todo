@@ -24,7 +24,7 @@ class PipelineStack(Stack):
                 input=pipelines.CodePipelineSource.git_hub(
                     # TODO move these into environment variables
                     "sendelivery/serverless-todo",
-                    "fix/logging",
+                    "main",
                 ),
                 commands=[
                     "chmod a+x ./scripts/pipeline/synth",
@@ -59,9 +59,16 @@ class PipelineStack(Stack):
             f"{prefix}BuildAndUploadDockerImage",
             commands=[
                 "chmod a+x ./scripts/pipeline/push_to_ecr",
-                f"./scripts/pipeline/push_to_ecr {ecr_repo_uri}",
+                f"./scripts/pipeline/push_to_ecr {ecr_repo_uri} {prefix}ApiEndpoint",
             ],
             role_policy_statements=[
+                iam.PolicyStatement(
+                    actions=["ssm:GetParameter"],
+                    resources=[
+                        f"arn:aws:ssm:{self.region}:{self.account}:parameter/{prefix}ApiEndpoint",
+                    ],
+                    effect=iam.Effect.ALLOW,
+                ),
                 iam.PolicyStatement(
                     actions=[
                         "ecr:CompleteLayerUpload",
@@ -160,11 +167,8 @@ class PipelineStack(Stack):
             application,
             stack_steps=[
                 pipelines.StackSteps(
-                    stack=application.stateful_stack,
-                    post=[build_and_deploy_docker_image_step],
-                ),
-                pipelines.StackSteps(
                     stack=application.web_stack,
+                    pre=[build_and_deploy_docker_image_step],
                     post=[configure_deploy_step, deploy_step],
                 ),
             ],

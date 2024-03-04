@@ -48,7 +48,7 @@ clean_string() {
 }
 
 PREFIX=$(clean_string "$branch_name")
-PREFIX="${PREFIX:0:24}-"
+PREFIX="${PREFIX:0:25}"
 readonly PREFIX
 
 echo -e "Using prefix: ${CYAN}$PREFIX${NO_COLOUR}"

@@ -51,7 +51,7 @@ export default function TodoSection(props: TodoSectionProps) {
         enqueueToast({
           level: "error",
           message:
-            "Sorry, we had trouble creating your Todo entry, please try again later.",
+            "Sorry, we had trouble creating your todo entry, please try again later.",
           lifespan: "inf",
         });
       });
@@ -76,7 +76,7 @@ export default function TodoSection(props: TodoSectionProps) {
         enqueueToast({
           level: "error",
           message:
-            "Sorry, we had trouble updating your Todo entry, please try again later.",
+            "Sorry, we had trouble updating your todo entry, please try again later.",
           lifespan: "inf",
         });
       });
@@ -97,7 +97,7 @@ export default function TodoSection(props: TodoSectionProps) {
         enqueueToast({
           level: "error",
           message:
-            "Sorry, we had trouble deleting your Todo entry, please try again later.",
+            "Sorry, we had trouble deleting your todo entry, please try again later.",
           lifespan: "inf",
         });
       });

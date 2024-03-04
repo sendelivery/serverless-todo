@@ -45,7 +45,7 @@ export async function serverPostEntry(formData: FormData) {
     console.error({
       message: "Received a non 2XX response when creating new todo entry.",
       input: JSON.stringify(todoEntryInput),
-      response: JSON.stringify(response),
+      response,
     });
     throw new Error("Unable to create new todo entry. Please try again later.");
   }
@@ -81,7 +81,7 @@ export async function serverPutEntry(id: string, completed: boolean) {
     console.error({
       message: "Received a non 2XX response when updating a todo entry.",
       proposedUpdate,
-      response: JSON.stringify(response),
+      response,
     });
     throw new Error("Unable to update todo entry. Please try again later.");
   }
@@ -108,7 +108,7 @@ export async function serverDeleteEntry(id: string) {
     console.error({
       message: "Received a non 2XX response when deleting a todo entry.",
       id,
-      response: JSON.stringify(response),
+      response,
     });
     throw new Error("Unable to delete todo entry. Please try again later.");
   }

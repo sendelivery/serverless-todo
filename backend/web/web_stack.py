@@ -2,6 +2,7 @@ from aws_cdk.aws_apigateway import IRestApi
 from aws_cdk.aws_ecr import IRepository
 from aws_cdk import (
     Duration,
+    RemovalPolicy,
     Stack,
     aws_ec2 as ec2,
     aws_ecs as ecs,
@@ -34,6 +35,7 @@ class WebStack(Stack):
         api: IRestApi,
         vpc: ec2.IVpc,
         ecr_repo: IRepository,
+        ephemeral_deployment: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -96,11 +98,17 @@ class WebStack(Stack):
         # one tagged as "latest" in our ECR repo. This alone, however, is not enough to handle
         # deploying new versions of our image. Hence the deployment group created further down.
 
+        if ephemeral_deployment:
+            log_group_removal_policy = RemovalPolicy.DESTROY
+        else:
+            log_group_removal_policy = RemovalPolicy.RETAIN
+
         log_group = logs.LogGroup(
             self,
             f"{prefix}WebContainersLogGroup",
             log_group_name=f"{prefix}WebContainers",
             retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=log_group_removal_policy,
         )
 
         task_definition.add_container(
@@ -121,6 +129,13 @@ class WebStack(Stack):
             ],
         )
 
+        if ephemeral_deployment:
+            deployment_controller = None
+        else:
+            deployment_controller = ecs.DeploymentController(
+                type=ecs.DeploymentControllerType.CODE_DEPLOY
+            )
+
         # The ALB fronting our cluster will be internet-facing and be assigned a public IP so that
         # traffic from the open internet can reach it.
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
@@ -134,10 +149,19 @@ class WebStack(Stack):
             listener_port=80,
             assign_public_ip=True,  # places our containers in our VPC's public subnets by default
             public_load_balancer=True,
-            deployment_controller=ecs.DeploymentController(
-                type=ecs.DeploymentControllerType.CODE_DEPLOY
-            ),
+            deployment_controller=deployment_controller,
         )
+
+        fargate_service.target_group.configure_health_check(
+            healthy_http_codes="200",
+            path="/health",
+            interval=Duration.minutes(5),
+        )
+
+        # When deploying ephemeral stacks, we don't need to spin up any CodeDeploy resources. Those
+        # are only used by our CICD pipeline, thus not necessary.
+        if ephemeral_deployment:
+            return
 
         # From here on, we'll define the resources required for the Blue / Green deployment
         # strategy.
@@ -158,6 +182,11 @@ class WebStack(Stack):
             f"{prefix}GreenTargetGroup",
             protocol=elb.ApplicationProtocol.HTTP,
             target_type=elb.TargetType.IP,
+            health_check=elb.HealthCheck(
+                healthy_http_codes="200",
+                path="/health",
+                interval=Duration.minutes(5),
+            ),
             vpc=vpc,
         )
 
