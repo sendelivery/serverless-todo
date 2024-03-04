@@ -98,14 +98,17 @@ class WebStack(Stack):
         # one tagged as "latest" in our ECR repo. This alone, however, is not enough to handle
         # deploying new versions of our image. Hence the deployment group created further down.
 
+        if ephemeral_deployment:
+            log_group_removal_policy = RemovalPolicy.DESTROY
+        else:
+            log_group_removal_policy = RemovalPolicy.RETAIN
+
         log_group = logs.LogGroup(
             self,
             f"{prefix}WebContainersLogGroup",
             log_group_name=f"{prefix}WebContainers",
             retention=logs.RetentionDays.ONE_WEEK,
-            removal_policy=RemovalPolicy.DESTROY
-            if ephemeral_deployment
-            else RemovalPolicy.RETAIN,
+            removal_policy=log_group_removal_policy,
         )
 
         task_definition.add_container(
@@ -126,12 +129,12 @@ class WebStack(Stack):
             ],
         )
 
-        deployment_controller = ecs.DeploymentController(
-            type=ecs.DeploymentControllerType.CODE_DEPLOY
-        )
-
         if ephemeral_deployment:
             deployment_controller = None
+        else:
+            deployment_controller = ecs.DeploymentController(
+                type=ecs.DeploymentControllerType.CODE_DEPLOY
+            )
 
         # The ALB fronting our cluster will be internet-facing and be assigned a public IP so that
         # traffic from the open internet can reach it.
@@ -155,6 +158,11 @@ class WebStack(Stack):
             interval=Duration.minutes(5),
         )
 
+        # When deploying ephemeral stacks, we don't need to spin up any CodeDeploy resources. Those
+        # are only used by our CICD pipeline, thus not necessary.
+        if ephemeral_deployment:
+            return
+
         # From here on, we'll define the resources required for the Blue / Green deployment
         # strategy.
         # TODO move this out into a custom construct?
@@ -164,9 +172,6 @@ class WebStack(Stack):
             f"{prefix}DeploymentApplication",
             application_name=f"{prefix}DeploymentApplication",
         )
-
-        if ephemeral_deployment:
-            return
 
         # Define the "green" target group and listener that our ALB will use to route canary
         # traffic.

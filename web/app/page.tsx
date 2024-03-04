@@ -15,17 +15,18 @@ export default async function Page() {
           tags: [ENTRIES_CACHE_TAG],
         },
       });
-
-      console.log({ response });
+      console.debug({ response });
 
       entries = await response.json();
-      console.log({ entries });
+      console.log({ message: "Successfully fetched entries!", entries });
     } catch (error) {
-      console.error(error);
+      console.error({
+        message: `Failed to fetch entries with the following error: ${error}`,
+      });
     }
   } else {
     console.warn(
-      "API endpoint and or key are undefined, please ensure environment variables are correctly set."
+      "API endpoint is undefined, please ensure environment variables are correctly set."
     );
   }
 

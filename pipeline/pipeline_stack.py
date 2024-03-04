@@ -24,7 +24,7 @@ class PipelineStack(Stack):
                 input=pipelines.CodePipelineSource.git_hub(
                     # TODO move these into environment variables
                     "sendelivery/serverless-todo",
-                    "fix/cache-invalidation",
+                    "main",
                 ),
                 commands=[
                     "chmod a+x ./scripts/pipeline/synth",
@@ -44,7 +44,7 @@ class PipelineStack(Stack):
         # construct here as it doesn't exist when the pipeline is synthesized and thus would be
         # considered "crossing stage boundaries". However, the name, URI, and ARN can be
         # consistently determined using information we have.
-        ecr_repo_name = f"{prefix.lower()}web-container"
+        ecr_repo_name = f"{prefix.lower()}-web-container"
         ecr_repo_uri = (
             f"{self.account}.dkr.ecr.{self.region}.amazonaws.com/{ecr_repo_name}"
         )

@@ -34,12 +34,13 @@ class StatelessStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        endpoint_configuration = None
-        api_resource_policy = None
-
         # Resource policy for our private API, this will restrict our API so that it can only be
-        # invoked via the designated VPC endpoint.
-        if not ephemeral_deployment:
+        # invoked via the designated VPC endpoint We don't configure this in ephemeral environments
+        # for simplicity.
+        if ephemeral_deployment:
+            api_resource_policy = None
+            endpoint_configuration = None
+        else:
             api_resource_policy = iam.PolicyDocument(
                 statements=[
                     iam.PolicyStatement(
@@ -73,8 +74,8 @@ class StatelessStack(Stack):
             f"{prefix}ApiDeploymentStage",
             rest_api_name=f"{prefix}Api",
             deploy=True,
-            endpoint_configuration=endpoint_configuration,
             policy=api_resource_policy,
+            endpoint_configuration=endpoint_configuration,
         )
         entries_resource = self._api.root.add_resource("entries")
 

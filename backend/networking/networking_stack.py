@@ -70,10 +70,14 @@ class NetworkingStack(Stack):
             "Allow TCP from anywhere.",
         )
 
-        self._vpc_interface_endpoint = None
-        if not ephemeral_deployment:
-            # This VPC interface endpoint will be used to secure our REST API and simulatneously allow
-            # the web app that will be deployed in our public subnets to access the private REST API.
+        if ephemeral_deployment:
+            # Our VPC doesn't need an interface endpoint if we're in an ephemeral environment,
+            # for simplicity, we'll expose our API GW endpoint to the open internet.
+            self._vpc_interface_endpoint = None
+        else:
+            # This VPC interface endpoint will be used to secure our REST API and simulatneously
+            # allow the web app that will be deployed in our public subnets to access the private
+            # REST API.
             self._vpc_interface_endpoint = self._vpc.add_interface_endpoint(
                 f"{prefix}VpcInterfaceEndpointForApi",
                 service=ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
