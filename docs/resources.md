@@ -11,3 +11,11 @@
 - https://aws.amazon.com/blogs/devops/blue-green-deployments-using-aws-cdk-pipelines-and-aws-codedeploy/ | Blue / Green deployments using CDK Pipelines and CodeDeploy 🐐
 - https://blog.serverlessadvocate.com/serverless-aws-cdk-pipeline-best-practices-patterns-part-1-ab80962f109d | Lee Gilmore - Serverless CDK Pipeline best practices and patterns 🐐
 - https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-task-definition.html | Sample ECS task definition
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html | Fargate Task Def Logs
+- https://nextjs.org/learn/dashboard-app/static-and-dynamic-rendering#making-the-dashboard-dynamic | Caching bug
+- https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config | Caching bug
+
+////// potentially read later?
+
+https://blog.serverlessadvocate.com/serverless-threat-modelling-df8e4028ef6d
+https://levelup.gitconnected.com/serverless-event-driven-systems-9617c6406064
