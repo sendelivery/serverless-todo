@@ -1,10 +1,10 @@
 from constructs import Construct
 from aws_cdk import RemovalPolicy, Stage
 
-from backend.networking import NetworkingStack
-from backend.stateless import StatelessStack
-from backend.stateful import StatefulStack
-from backend.web import WebStack
+from application.networking import NetworkingStack
+from application.stateless import StatelessStack
+from application.stateful import StatefulStack
+from application.web import WebStack
 
 
 class ApplicationStage(Stage):
