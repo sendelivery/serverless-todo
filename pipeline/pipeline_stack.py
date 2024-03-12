@@ -32,7 +32,7 @@ class PipelineStack(Stack):
                 "Synth",
                 input=pipelines.CodePipelineSource.git_hub(
                     "sendelivery/serverless-todo",
-                    "main",
+                    "chore/refactors-and-configuration",
                 ),
                 commands=[
                     "chmod a+x ./scripts/pipeline/synth",
