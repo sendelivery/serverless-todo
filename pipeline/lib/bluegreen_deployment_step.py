@@ -1,5 +1,4 @@
 import jsii
-
 from aws_cdk import (
     pipelines,
     aws_codepipeline as codepipeline,

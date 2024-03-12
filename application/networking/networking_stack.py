@@ -1,34 +1,41 @@
-from aws_cdk import (
-    Stack,
-    aws_ec2 as ec2,
-)
 from constructs import Construct
+from aws_cdk import Stack, aws_ec2 as ec2
+from config import CommonConfig
 
 
 class NetworkingStack(Stack):
+    """The networking stack defines the VPC, subnets, and VPC endpoints that will be used
+    throughout."""
+
     @property
     def vpc(self):
-        """
-        The VPC that will house all resources of our app.
-        """
         return self._vpc
 
     @property
     def vpc_interface_endpoint(self):
-        """
-        VPC endpoint
-        """
         return self._vpc_interface_endpoint
 
     def __init__(
         self,
         scope: Construct,
         id: str,
-        prefix: str,
-        ephemeral_deployment: bool = False,
+        config: CommonConfig,
         **kwargs,
     ) -> None:
+        """This stack defines all the networking related resources to be used across our CDK app.
+
+        If synthesised during an ephemeral deployment, a VPC interface endpoint for API Gateway
+        will not be created.
+
+        Args:
+            scope (Construct):This stack's parent or owner. This can either be a stack or another
+            construct.
+            id (str): The construct ID of this stack.
+            config (CommonConfig): A user-defined configuration data class.
+        """
         super().__init__(scope, id, **kwargs)
+
+        prefix = config.prefix
 
         # We'll create a VPC with the specified subnet configuration, the public subnets will be
         # used by our Fargate cluster, the isolated ones by our backend Lambdas and API Gateway.
@@ -70,12 +77,12 @@ class NetworkingStack(Stack):
             "Allow TCP from anywhere.",
         )
 
-        if ephemeral_deployment:
-            # Our VPC doesn't need an interface endpoint if we're in an ephemeral environment,
-            # for simplicity, we'll expose our API GW endpoint to the open internet.
+        if config.ephemeral:
+            # We won't create an interface endpoint if we're in an ephemeral environment.
+            # Our statelss resources can be exposed to the open internet for simplicity.
             self._vpc_interface_endpoint = None
         else:
-            # This VPC interface endpoint will be used to secure our REST API and simulatneously
+            # This VPC interface endpoint will be used to secure our REST API and simultaneously
             # allow the web app that will be deployed in our public subnets to access the private
             # REST API.
             self._vpc_interface_endpoint = self._vpc.add_interface_endpoint(

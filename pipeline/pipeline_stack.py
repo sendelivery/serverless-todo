@@ -8,11 +8,20 @@ from aws_cdk import (
 
 from .lib.bluegreen_deployment_step import BlueGreenDeploymentStep
 from .application_stage import ApplicationStage
+from config import CommonConfig
 
 
 class PipelineStack(Stack):
-    def __init__(self, scope: Construct, id: str, prefix: str, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        id: str,
+        config: CommonConfig,
+        **kwargs,
+    ) -> None:
         super().__init__(scope, id, **kwargs)
+
+        prefix = config.prefix
 
         pipeline = pipelines.CodePipeline(
             self,
@@ -22,7 +31,6 @@ class PipelineStack(Stack):
             synth=pipelines.ShellStep(
                 "Synth",
                 input=pipelines.CodePipelineSource.git_hub(
-                    # TODO move these into environment variables
                     "sendelivery/serverless-todo",
                     "main",
                 ),
@@ -34,7 +42,7 @@ class PipelineStack(Stack):
         )
 
         application = ApplicationStage(
-            self, f"{prefix}ApplicationStage", prefix=prefix, **kwargs
+            self, f"{prefix}ApplicationStage", config, **kwargs
         )
 
         # Below we define custom pipeline steps required for the initial deployment of our web app,
@@ -43,14 +51,9 @@ class PipelineStack(Stack):
         # This repository is created in our stateful stack, unfortunately we can't use the actual
         # construct here as it doesn't exist when the pipeline is synthesized and thus would be
         # considered "crossing stage boundaries". However, the name, URI, and ARN can be
-        # consistently determined using information we have.
-        ecr_repo_name = f"{prefix.lower()}-web-container"
-        ecr_repo_uri = (
-            f"{self.account}.dkr.ecr.{self.region}.amazonaws.com/{ecr_repo_name}"
-        )
-        ecr_repo_arn = (
-            f"arn:aws:ecr:{self.region}:{self.account}:repository/{ecr_repo_name}"
-        )
+        # reliably determined using information we have.
+        ecr_repo_uri = f"{self.account}.dkr.ecr.{self.region}.amazonaws.com/{config.image_repository_name}"
+        ecr_repo_arn = f"arn:aws:ecr:{self.region}:{self.account}:repository/{config.image_repository_name}"
 
         # STEP: Build and upload a Docker image of our Next.js web app to ECR.
         # This step uses the pipeline's source file set by default (i.e. GitHub), meaning we don't

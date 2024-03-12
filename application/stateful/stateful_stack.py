@@ -1,22 +1,13 @@
-from aws_cdk import (
-    Stack,
-    aws_dynamodb as dynamo,
-    aws_ecr as ecr,
-    RemovalPolicy,
-)
 from constructs import Construct
-
-
-# The stateful side of our application consists of a single DynamoDB table and ECR repository.
+from aws_cdk import Stack, aws_dynamodb as dynamo, aws_ecr as ecr
+from config import CommonConfig
 
 
 class StatefulStack(Stack):
+    """This stack defines the resources used for our application's persistent storage."""
+
     @property
     def entries_table(self):
-        """
-        The DynamoDB table used to store todo entries, created by our stateful stack.
-        Using the table property will create an implicit CloudFormation output.
-        """
         return self._entries_table
 
     @property
@@ -24,42 +15,34 @@ class StatefulStack(Stack):
         return self._ecr_repository
 
     def __init__(
-        self,
-        scope: Construct,
-        construct_id: str,
-        prefix: str,
-        removal_policy: RemovalPolicy = RemovalPolicy.RETAIN,
-        **kwargs,
+        self, scope: Construct, id: str, config: CommonConfig, **kwargs
     ) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+        """This stack defines a DynamoDB table used to store application data and an ECR
+        repository to store our web app's build image.
 
-        # Define the DynamoDB table that will hold our todo entries
+        Args:
+            scope (Construct):This stack's parent or owner. This can either be a stack or another
+            construct.
+            id (str): The construct ID of this stack.
+            config (CommonConfig): A user-defined configuration data class.
+        """
+        super().__init__(scope, id, **kwargs)
+
+        prefix = config.prefix
+
         self._entries_table = dynamo.Table(
             self,
             f"{prefix}EntriesTable",
             table_name=f"{prefix}EntriesTable",
             partition_key=dynamo.Attribute(name="Id", type=dynamo.AttributeType.STRING),
-            removal_policy=removal_policy,
+            removal_policy=config.removal_policy,
         )
-
-        auto_delete_images = False
-        lifecycle_rule = None
-        if removal_policy == RemovalPolicy.DESTROY:
-            auto_delete_images = True
-            lifecycle_rule = [
-                ecr.LifecycleRule(
-                    description="Hold only 1 image in ephemeral repository.",
-                    max_image_count=1,
-                )
-            ]
-
-        repository_name = f"{prefix.lower()}-web-container"
 
         self._ecr_repository = ecr.Repository(
             self,
             f"{prefix}ContainerRepo",
-            repository_name=repository_name,
-            auto_delete_images=auto_delete_images,
-            lifecycle_rules=lifecycle_rule,
-            removal_policy=removal_policy,
+            repository_name=config.image_repository_name,
+            auto_delete_images=config.auto_delete_images,
+            lifecycle_rules=config.ecr_lifecycle_rule,
+            removal_policy=config.removal_policy,
         )
