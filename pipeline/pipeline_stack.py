@@ -5,7 +5,6 @@ from aws_cdk import (
     aws_codedeploy as codedeploy,
     aws_iam as iam,
 )
-
 from .lib.bluegreen_deployment_step import BlueGreenDeploymentStep
 from .application_stage import ApplicationStage
 from config import CommonConfig
@@ -62,16 +61,9 @@ class PipelineStack(Stack):
             f"{prefix}BuildAndUploadDockerImage",
             commands=[
                 "chmod a+x ./scripts/pipeline/push_to_ecr",
-                f"./scripts/pipeline/push_to_ecr {ecr_repo_uri} {prefix}ApiEndpoint",
+                f"./scripts/pipeline/push_to_ecr {ecr_repo_uri}",
             ],
             role_policy_statements=[
-                iam.PolicyStatement(
-                    actions=["ssm:GetParameter"],
-                    resources=[
-                        f"arn:aws:ssm:{self.region}:{self.account}:parameter/{prefix}ApiEndpoint",
-                    ],
-                    effect=iam.Effect.ALLOW,
-                ),
                 iam.PolicyStatement(
                     actions=[
                         "ecr:CompleteLayerUpload",
@@ -112,22 +104,7 @@ class PipelineStack(Stack):
             commands=[
                 "ls",
                 "chmod a+x ./codedeploy/configure_deploy_step",
-                (
-                    # Inspect the script itself to view details of the required parameters.
-                    # TODO names are deterministic and account / region can be retrieved from env,
-                    # all we really need is the prefix and pipeline id...?
-                    "./codedeploy/configure_deploy_step "
-                    f"{pipeline.node.id} "
-                    f"{self.account} "
-                    f"{self.region} "
-                    f"{prefix}Container "
-                    f"{prefix}FargateTaskExecutionRole "
-                    f"{prefix}FargateTaskDefinition "
-                    f"{prefix}ApiEndpoint "
-                    f"{ecr_repo_uri}:latest "
-                    f"{prefix}WebContainers "
-                    f"{prefix}"
-                ),
+                f"./codedeploy/configure_deploy_step {prefix} {ecr_repo_uri}:latest",
             ],
         )
 
@@ -141,12 +118,14 @@ class PipelineStack(Stack):
         )
 
         # Next, we can grab the deployment group itself from the application.
-        cd_deployment_group = codedeploy.EcsDeploymentGroup.from_ecs_deployment_group_attributes(
-            self,
-            f"{prefix}ECSDeploymentGroupId",
-            application=cd_application,
-            deployment_group_name=f"{prefix}BlueGreenDeploymentGroup",
-            deployment_config=codedeploy.EcsDeploymentConfig.CANARY_10_PERCENT_5_MINUTES,
+        cd_deployment_group = (
+            codedeploy.EcsDeploymentGroup.from_ecs_deployment_group_attributes(
+                self,
+                f"{prefix}ECSDeploymentGroupId",
+                application=cd_application,
+                deployment_group_name=f"{prefix}BlueGreenDeploymentGroup",
+                deployment_config=config.deployment_config,
+            )
         )
 
         # STEP: Run the Blue / Green deployment.

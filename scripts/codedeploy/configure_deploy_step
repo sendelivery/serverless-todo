@@ -6,60 +6,62 @@
 #
 # The generated files are included as the step's output file set for later use.
 #
-# pipeline_id = Id of the pipeline, for debugging
-# account = AWS environment account ID
-# region = AWS environment region (e.g. eu-west-1)
-# container_name = Name of the container that will be created
-# task_execution_role_name = Name of the task exec role, used to derive its ARN
-# api_endpoint_ssm_param = Name of the SSM parameter that stores our endpoint
-# image_uri = The URI of our web application's container image
-#
 # Primary output directory is codedeploy/. All the 3 files created
 # (appspec.json, imageDetail.json and taskDef.json) will be located inside the
 # codedeploy/ directory.
 #
+# Parameters:
+#   - Prefix: The prefix defined in the project configuration, used to compute
+#     required resource names.
+#   - Image URI: The URI for our web application's latest image.
 
-pipeline_id=$1
-account=$2
-region=$3
-container_name=$4
-task_execution_role_name=$5
-task_definition_name=$6
-api_endpoint_ssm_param=$7
-image_uri=$8
-log_group=$9
-stream_prefix=${10}
+prefix=$1
+image_uri=$2
 
-echo "Pipeline Id:" "$pipeline_id"
+account="$(echo "$CODEBUILD_BUILD_ARN" | cut -f5 -d ':')"
+region="${AWS_REGION}"
+
+container_name="$prefix"Container
+task_execution_role_name="$prefix"FargateTaskExecutionRole
+task_definition_name="$prefix"FargateTaskDefinition
+api_endpoint_ssm_param="$prefix"ApiEndpoint
+log_group="$prefix"WebContainers
+
+api_endpoint="$(aws ssm get-parameter --name "$api_endpoint_ssm_param" \
+  --query Parameter.Value)" || exit
+api_endpoint=$(echo "$api_endpoint" | tr -d '"') # Removes double quotes
+
+# Log out computed values and run `ls` for debugging
 echo "Account:" "$account"
 echo "Region:" "$region"
 echo "Container Name:" "$container_name"
 echo "Task Execution Role Name:" "$task_execution_role_name"
 echo "Task Definition Name:" "$task_definition_name"
 echo "API Endpoint SSM Param Name:" "$api_endpoint_ssm_param"
+echo "API Endpoint:" "$api_endpoint"
 echo "Image URI:" "$image_uri"
 echo "Log Group:" "$log_group"
-echo "Stream Prefix:" "$stream_prefix"
-
-TodoApiEndpoint="$(aws ssm get-parameter --name "$api_endpoint_ssm_param" --query Parameter.Value)" || exit
-TodoApiEndpoint=$(echo "$TodoApiEndpoint" | tr -d '"') # Removes double quotes
-
-echo "TodoApiEndpoint:" "$TodoApiEndpoint"
+echo "Stream Prefix:" "$prefix"
 
 ls -l
 ls -l codedeploy
 
+# We'll, create the required file set for our CodeDeploy step by using the
+# pre-existing templates and creating new files where appropriate.
+
+# imageDetail.json
 printf '{"ImageURI":"%s"}' "$image_uri" >codedeploy/imageDetail.json
 
-# Edit the templates using stream edit and output the changes to a new file
-# these files will be included in out output file set.
-sed 's#CONTAINER_NAME#'"$container_name"'#g' codedeploy/template-appspec.yaml >codedeploy/appspec.yaml
+# appspec.yml
+sed 's#CONTAINER_NAME#'"$container_name"'#g' codedeploy/template-appspec.yaml \
+  >codedeploy/appspec.yaml
 
+# taskdef.json
 sed 's#CONTAINER_NAME#'"$container_name"'#g' codedeploy/template-taskdef.json |
   sed 's#TASK_EXEC_ROLE#arn:aws:iam::'"$account"':role/'"$task_execution_role_name"'#g' |
   sed 's#REGION#'"$region"'#g' | sed 's#TASK_DEF#'"$task_definition_name"'#g' |
-  sed 's#LOG_GROUP#'"$log_group"'#g' | sed 's#STREAM_PREFIX#'"$stream_prefix"'#g' |
-  sed 's#TODO_API_ENDPOINT_VALUE#'"$TodoApiEndpoint"'#g' >codedeploy/taskdef.json
+  sed 's#LOG_GROUP#'"$log_group"'#g' | sed 's#STREAM_PREFIX#'"$prefix"'#g' |
+  sed 's#TODO_API_ENDPOINT_VALUE#'"$api_endpoint"'#g' >codedeploy/taskdef.json
 
 cat codedeploy/appspec.yaml
 cat codedeploy/taskdef.json
