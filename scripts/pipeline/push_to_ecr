@@ -1,27 +1,19 @@
 #!/bin/bash
 #
-# This script containerises the web app using Docker, tags it as "latest" and
+# This script builds a Docker image of our web app, tags it as "latest" and
 # pushes it to ECR for our CodeDeploy job to later source during the blue /
 # green deployment.
 #
 # This will happen even if there are no changes in the web app's source code.
 #
+# Parameters:
+#   - Repository: The URI of the ECR repository to upload our image to.
 
 repo=$1
-api_endpoint_ssm_param=$2
 
 echo "ECR Repository: " "$repo"
-# TODO - do we need this now that our root page is dynamically rendered?
-echo "API Endpoint SSM Param Name:" "$api_endpoint_ssm_param"
-
-TodoApiEndpoint="$(aws ssm get-parameter --name "$api_endpoint_ssm_param" --query Parameter.Value)" || exit
-TodoApiEndpoint=$(echo "$TodoApiEndpoint" | tr -d '"') # Removes double quotes
-
-echo "API Endpoint:" "$TodoApiEndpoint"
 
 cd web/ || exit
-
-echo "TODO_API_ENDPOINT=""$TodoApiEndpoint" >.env.local
 
 echo Logging in to Amazon ECR
 aws ecr get-login-password | docker login --username AWS --password-stdin "$repo"
